@@ -53,7 +53,9 @@ static int list_dir(const char *dirpath) {
 			if (err == fnfErr) {
 				break;
 			}
-			fprintf(stderr, "## Error: could not list directory '%s' (err = %d)\n", dirpath, err);
+			fprintf(stderr,
+			        "## Error: could not list directory '%s' (err = %d)\n",
+			        dirpath, err);
 			continue;
 		}
 		ppath[ppath[0] + 1] = '\0';
