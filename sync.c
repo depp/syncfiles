@@ -17,49 +17,50 @@ static int c2pstr(Str255 ostr, const char *istr) {
 }
 
 static int list_dir(const char *dirpath) {
-	unsigned char path[257];
-	WDPBRec wd;
+	Str255 ppath;
 	CInfoPBRec ci;
 	OSErr err;
-	int i, result = 0;
+	short vRefNum;
+	long dirID;
+	int i;
 
-	if (c2pstr(path, dirpath)) {
+	if (c2pstr(ppath, dirpath)) {
 		return 1;
 	}
-	memset(&wd, 0, sizeof(wd));
-	wd.ioNamePtr = path;
-	err = PBOpenWDSync(&wd);
+	memset(&ci, 0, sizeof(ci));
+	ci.dirInfo.ioNamePtr = ppath;
+	err = PBGetCatInfoSync(&ci);
 	if (err != 0) {
-		fprintf(stderr, "## Error: could not open directory '%s' (err = %d)\n", dirpath, err);
+		fprintf(stderr, "## Error: PBGetCatInfoSync: %d\n", err);
 		return 1;
 	}
-	printf("Path: %s\n", dirpath);
-	printf("    VREF: %d\n", wd.ioVRefNum);
+	vRefNum = ci.dirInfo.ioVRefNum;
+	dirID = ci.dirInfo.ioDrDirID;
+	printf("vRefNum: %d; dirID: %d\n", vRefNum, dirID);
+	if ((ci.dirInfo.ioFlAttrib & kioFlAttribDirMask) == 0) {
+		fprintf(stderr, "## Error: not a directory: %s\n", dirpath);
+		return 1;
+	}
 
-	for (i = 1; i < 10; i++) {
+	for (i = 1; i < 100; i++) {
 		memset(&ci, 0, sizeof(ci));
-		ci.dirInfo.ioNamePtr = path;
-		ci.dirInfo.ioVRefNum = wd.ioVRefNum;
+		ci.dirInfo.ioNamePtr = ppath;
+		ci.dirInfo.ioVRefNum = vRefNum;
+		ci.dirInfo.ioDrDirID = dirID;
 		ci.dirInfo.ioFDirIndex = i;
 		err = PBGetCatInfoSync(&ci);
 		if (err != 0) {
-			printf("    err\n");
-			if (err != fnfErr) {
-				result = 1;
-				fprintf(stderr, "## Error: could not list directory '%s' (err = %d)\n", dirpath, err);
+			if (err == fnfErr) {
+				break;
 			}
+			fprintf(stderr, "## Error: could not list directory '%s' (err = %d)\n", dirpath, err);
 			continue;
 		}
-		path[path[0] + 1] = '\0';
-		printf("    File: '%s'\n", path + 1);
+		ppath[ppath[0] + 1] = '\0';
+		printf("    File: '%s'\n", ppath + 1);
 	}
 
-	err = PBCloseWDSync(&wd);
-	if (err != 0) {
-		fprintf(stderr, "## Error: could not close directory '%s' (err = %d)\n", dirpath, err);
-		return 1;
-	}
-	return result;
+	return 0;
 }
 
 int main(int argc, char **argv, char **envp) {
