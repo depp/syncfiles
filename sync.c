@@ -2,13 +2,32 @@
 #include <MacMemory.h>
 #include <StringCompare.h>
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+
+static void print_err(const char *msg, ...) {
+	va_list ap;
+	fputs("## Error: ", stderr);
+	va_start(ap, msg);
+	vfprintf(stderr, msg, ap);
+	va_end(ap);
+	fputc('\n', stderr);
+}
+
+static void print_errcode(OSErr err, const char *msg, ...) {
+	va_list ap;
+	fputs("## Error: ", stderr);
+	va_start(ap, msg);
+	vfprintf(stderr, msg, ap);
+	va_end(ap);
+	fprintf(stderr, ": err=%d\n", err);
+}
 
 static int c2pstr(Str255 ostr, const char *istr) {
 	size_t n = strlen(istr);
 	if (n > 255) {
-		fprintf(stderr, "## Error: path too long: %s\n", istr);
+		print_err("path too long: %s", istr);
 		return 1;
 	}
 	ostr[0] = n;
@@ -95,7 +114,11 @@ static int dir_from_path(short *vRefNum, long *dirID, const char *dirpath) {
 	}
 	err = FSMakeFSSpec(0, 0, ppath, &spec);
 	if (err != 0) {
-		fprintf(stderr, "## Error: FSMakeFSSpec: %d\n", err);
+		if (err == fnfErr) {
+			print_err("does not exist: %s", dirpath);
+		} else {
+			print_errcode(err, "FSMakeFSSpec");
+		}
 		return 1;
 	}
 	memset(&ci, 0, sizeof(ci));
@@ -104,11 +127,11 @@ static int dir_from_path(short *vRefNum, long *dirID, const char *dirpath) {
 	ci.dirInfo.ioDrDirID = spec.parID;
 	err = PBGetCatInfoSync(&ci);
 	if (err != 0) {
-		fprintf(stderr, "## Error: PBGetCatInfoSync: %d\n", err);
+		print_errcode(err, "PBGetCatInfoSync");
 		return 1;
 	}
 	if ((ci.dirInfo.ioFlAttrib & kioFlAttribDirMask) == 0) {
-		fprintf(stderr, "## Error: not a directory: %s\n", dirpath);
+		print_err("not a directory: %s", dirpath);
 		return 1;
 	}
 	*vRefNum = ci.dirInfo.ioVRefNum;
@@ -162,8 +185,7 @@ static int list_dir(short vRefNum, long dirID, int which) {
 			if (err == fnfErr) {
 				break;
 			}
-			fprintf(stderr, "## Error: could not list directory (err = %d)\n",
-			        err);
+			print_errcode(err, "could not list directory");
 			continue;
 		}
 		if ((ci.hFileInfo.ioFlAttrib & kioFlAttribDirMask) == 0 &&
@@ -188,7 +210,7 @@ static int command_main(char *destpath) {
 
 	err = HGetVol(NULL, &srcVol, &srcDir);
 	if (err != 0) {
-		fprintf(stderr, "## Error: HGetVol: %d\n", err);
+		print_errcode(err, "HGetVol");
 		return 1;
 	}
 	r = dir_from_path(&destVol, &destDir, destpath);
@@ -204,7 +226,7 @@ static int command_main(char *destpath) {
 		return 1;
 	}
 	if (gFileCount == 0) {
-		fputs("## Error: no files\n", stderr);
+		print_err("no files");
 		return 1;
 	}
 	HLock(gFiles);
