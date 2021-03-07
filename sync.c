@@ -1,5 +1,6 @@
 #include <Files.h>
 #include <MacMemory.h>
+#include <StringCompare.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -97,7 +98,6 @@ static int dir_from_path(short *vRefNum, long *dirID, const char *dirpath) {
 		fprintf(stderr, "## Error: FSMakeFSSpec: %d\n", err);
 		return 1;
 	}
-	printf("vol = %d, dir = %ld\n", spec.vRefNum, spec.parID);
 	memset(&ci, 0, sizeof(ci));
 	ci.dirInfo.ioNamePtr = spec.name;
 	ci.dirInfo.ioVRefNum = spec.vRefNum;
@@ -116,14 +116,41 @@ static int dir_from_path(short *vRefNum, long *dirID, const char *dirpath) {
 	return 0;
 }
 
+static int filter_name(unsigned char *name) {
+	int len, i, stem;
+	unsigned char *ext;
+
+	if (EqualString(name, "\pmakefile", FALSE, TRUE)) {
+		return 1;
+	}
+	stem = 0;
+	len = name[0];
+	for (i = 0; i < len; i++) {
+		if (name[i + 1] == '.') {
+			stem = i;
+		}
+	}
+	if (stem != 0) {
+		ext = name + 2 + stem;
+		len -= stem + 1;
+		switch (len) {
+		case 1:
+			if (ext[0] == 'c' || ext[0] == 'h' || ext[0] == 'r') {
+				return 1;
+			}
+			break;
+		}
+	}
+	return 0;
+}
+
 static int list_dir(short vRefNum, long dirID, int which) {
 	Str255 ppath;
 	CInfoPBRec ci;
+	struct file_info *file;
 	OSErr err;
 	int i;
 
-	printf("FILES\n");
-	(void)which;
 	for (i = 1; i < 100; i++) {
 		memset(&ci, 0, sizeof(ci));
 		ci.dirInfo.ioNamePtr = ppath;
@@ -139,8 +166,13 @@ static int list_dir(short vRefNum, long dirID, int which) {
 			        err);
 			continue;
 		}
-		ppath[ppath[0] + 1] = '\0';
-		printf("    File: '%s'\n", ppath + 1);
+		if ((ci.hFileInfo.ioFlAttrib & kioFlAttribDirMask) == 0 &&
+		    filter_name(ppath)) {
+			ppath[ppath[0] + 1] = '\0';
+			file = get_file(ppath);
+			file->meta[which].exists = TRUE;
+			file->meta[which].modTime = ci.hFileInfo.ioFlMdDat;
+		}
 	}
 
 	return 0;
@@ -149,8 +181,10 @@ static int list_dir(short vRefNum, long dirID, int which) {
 static int command_main(char *destpath) {
 	short srcVol, destVol;
 	long srcDir, destDir;
+	struct file_info *array, *file;
 	OSErr err;
-	int r;
+	int r, i, n;
+	char name[32];
 
 	err = HGetVol(NULL, &srcVol, &srcDir);
 	if (err != 0) {
@@ -169,6 +203,24 @@ static int command_main(char *destpath) {
 	if (r != 0) {
 		return 1;
 	}
+	if (gFileCount == 0) {
+		fputs("## Error: no files\n", stderr);
+		return 1;
+	}
+	HLock(gFiles);
+	array = (struct file_info *)*gFiles;
+	n = gFileCount;
+	for (i = 0; i < n; i++) {
+		file = &array[i];
+		memcpy(name, file->name + 1, file->name[0]);
+		name[file->name[0]] = '\0';
+		printf("File: %s\n", name);
+		printf("  exist: %c %c\n", file->meta[0].exists ? 'Y' : '-',
+		       file->meta[1].exists ? 'Y' : '-');
+		printf("  modTime: %ld %ld\n", file->meta[0].modTime,
+		       file->meta[1].modTime);
+	}
+	HUnlock(gFiles);
 
 	return 0;
 }
