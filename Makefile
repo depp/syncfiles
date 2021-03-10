@@ -8,14 +8,17 @@ COptions-68K = {COptions} {Sym-68K}
 ### Source Files ###
 
 SrcFiles = ∂
+	mac_to_unix.c ∂
 	sync.c
 
 ### Object Files ###
 
 ObjFiles-PPC = ∂
+	mac_to_unix.c.x ∂
 	sync.c.x
 
 ObjFiles-68K = ∂
+	mac_to_unix.c.o ∂
 	sync.c.o
 
 ### Libraries ###
@@ -69,8 +72,19 @@ SyncFiles ƒƒ {ObjFiles-68K} {LibFiles-68K}
 
 Dependencies  ƒ  $OutOfDate
 	MakeDepend ∂
-		-append {MAKEFILE} ∂
+		-append Makefile ∂
 		-ignore "{CIncludes}" ∂
 		-objext .x ∂
 		-objext .o ∂
 		{SrcFiles}
+
+#*** Dependencies: Cut here ***
+# These dependencies were produced at 10:09:51 PM on Sat, Mar 6, 2021 by MakeDepend
+
+:mac_to_unix.c.x :mac_to_unix.c.o	ƒ  ∂
+	:mac_to_unix.c ∂
+	:defs.h
+
+:sync.c.x :sync.c.o	ƒ  ∂
+	:sync.c ∂
+	:defs.h
