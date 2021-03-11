@@ -732,7 +732,7 @@ static int command_main(char *destpath, int mode) {
 				              file->meta[kSrcDir].modTime);
 			} else {
 				if (tempDir == 0) {
-					err = FindFolder(destVol, kTemporaryFolderType, TRUE,
+					err = FindFolder(srcVol, kTemporaryFolderType, TRUE,
 					                 &tempVol, &tempDir);
 					if (err != 0) {
 						print_errcode(err, "could not find temporary folder");
