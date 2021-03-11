@@ -613,8 +613,9 @@ static int command_main(char *destpath, int mode) {
 	long srcDir, destDir, tempDir;
 	struct file_info *array, *file, *srcNewer, *destNewer;
 	OSErr err;
-	int r, i, n;
+	int r, i, j, n;
 	char name[32];
+	const char *modeStr;
 
 	// Get handles to src and dest directories.
 	err = HGetVol(NULL, &srcVol, &srcDir);
@@ -662,6 +663,30 @@ static int command_main(char *destpath, int mode) {
 		} else if (file->meta[kSrcDir].modTime > file->meta[kDestDir].modTime) {
 			file->mode = kModePush;
 			srcNewer = file;
+		}
+		if (gLogLevel >= kLogVerbose) {
+			p2cstr(name, file->name);
+			switch (file->mode) {
+			default:
+			case kModeAuto:
+				modeStr = "equal";
+				break;
+			case kModePull:
+				modeStr = "destNewer";
+				break;
+			case kModePush:
+				modeStr = "srcNewer";
+				break;
+			}
+			fprintf(stderr, "## File: %s %s", name, modeStr);
+			for (j = 0; j < 2; j++) {
+				if (!file->meta[j].exists) {
+					fputs(" -", stderr);
+				} else {
+					fprintf(stderr, " %ld", file->meta[j].modTime);
+				}
+			}
+			fputc('\n', stderr);
 		}
 	}
 
@@ -722,7 +747,7 @@ static int command_main(char *destpath, int mode) {
 				print_err("failed to copy file: %s", name);
 				return 1;
 			}
-			if (gLogLevel >= kLogInfo) {
+			if (gLogLevel >= kLogVerbose) {
 				fprintf(stderr, "## Done writing %s\n", name);
 			}
 		} else if (file->mode != kModeAuto) {
