@@ -22,11 +22,11 @@ enum {
 	kMaxFileSize = 64 * 1024,
 };
 
-typedef void (*convert_func)(unsigned char **outptr, unsigned char *outend,
-                             const unsigned char **inptr,
-                             const unsigned char *inend);
+typedef int (*convert_func)(unsigned char **outptr, unsigned char *outend,
+                            const unsigned char **inptr,
+                            const unsigned char *inend);
 
-static void print_err(const char *msg, ...) {
+void print_err(const char *msg, ...) {
 	va_list ap;
 	fputs("## Error: ", stderr);
 	va_start(ap, msg);
@@ -43,26 +43,29 @@ struct error_message {
 	OSErr err;
 	const char *msg;
 };
+#define E(e, m) \
+	{ e, m "\0" #e }
 const struct error_message kErrorMessages[] = {
-	{dirFulErr, "directory full"},                                   // -33
-	{dskFulErr, "disk full"},                                        // -34
-	{ioErr, "I/O error"},                                            // -36
-	{bdNamErr, "bad name"},                                          // -37
-	{fnfErr, "file not found"},                                      // -43
-	{wPrErr, "disk is write-protected"},                             // -44
-	{fLckdErr, "file is locked"},                                    // -45
-	{vLckdErr, "volume is locked"},                                  // -46
-	{dupFNErr, "destination already exists"},                        // -48
-	{opWrErr, "file already open for writing"},                      // -49
-	{paramErr, "parameter error"},                                   // -50
-	{permErr, "cannot write to locked file"},                        // -54
-	{dirNFErr, "directory not found"},                               // -120
-	{wrgVolTypErr, "not an HFS volume"},                             // -123
-	{diffVolErr, "files on different volumes"},                      // -1303
-	{afpAccessDenied, "user does not have access privileges (AFP)"}, // -5000
-	{afpObjectTypeErr,
-     "file/directory specified where directory/file expected"}, // -5025
-	{afpSameObjectErr, "objects are the same"},                 // -5038
+	E(dirFulErr, "directory full"),                                   // -33
+	E(dskFulErr, "disk full"),                                        // -34
+	E(ioErr, "I/O error"),                                            // -36
+	E(bdNamErr, "bad name"),                                          // -37
+	E(fnfErr, "file not found"),                                      // -43
+	E(wPrErr, "disk is write-protected"),                             // -44
+	E(fLckdErr, "file is locked"),                                    // -45
+	E(vLckdErr, "volume is locked"),                                  // -46
+	E(fBsyErr, "file is busy"),                                       // -47
+	E(dupFNErr, "destination already exists"),                        // -48
+	E(opWrErr, "file already open for writing"),                      // -49
+	E(paramErr, "parameter error"),                                   // -50
+	E(permErr, "cannot write to locked file"),                        // -54
+	E(dirNFErr, "directory not found"),                               // -120
+	E(wrgVolTypErr, "not an HFS volume"),                             // -123
+	E(diffVolErr, "files on different volumes"),                      // -1303
+	E(afpAccessDenied, "user does not have access privileges (AFP)"), // -5000
+	E(afpObjectTypeErr,
+      "file/directory specified where directory/file expected"), // -5025
+	E(afpSameObjectErr, "objects are the same"),                 // -5038
 };
 
 static const char *mac_strerror(OSErr err) {
@@ -75,7 +78,7 @@ static const char *mac_strerror(OSErr err) {
 	return NULL;
 }
 
-static void print_errcode(OSErr err, const char *msg, ...) {
+void print_errcode(int err, const char *msg, ...) {
 	va_list ap;
 	const char *emsg;
 
@@ -88,6 +91,22 @@ static void print_errcode(OSErr err, const char *msg, ...) {
 		fprintf(stderr, ": %s (%d)\n", emsg, err);
 	} else {
 		fprintf(stderr, ": err=%d\n", err);
+	}
+}
+
+static void log_call(int err, const char *function) {
+	const char *emsg;
+
+	if (err == 0) {
+		fprintf(stderr, "## %s: noErr\n", function);
+		return;
+	}
+	emsg = mac_strerror(err);
+	if (emsg != NULL) {
+		emsg += strlen(emsg) + 1;
+		fprintf(stderr, "## %s: %s (%d)\n", function, emsg, err);
+	} else {
+		fprintf(stderr, "## %s: %d\n", function, err);
 	}
 }
 
@@ -452,10 +471,13 @@ static int write_file(FSSpec *dest, short tempVol, long tempDir, Ptr data,
 	// First, try to exchange files if destination exists.
 	if (destExists) {
 		err = FSpExchangeFiles(&temp, dest);
+		if (gLogLevel >= kLogVerbose) {
+			log_call(err, "FSpExchangeFiles");
+		}
 		if (err == 0) {
 			err = FSpDelete(&temp);
 			if (err != 0) {
-				print_errcode(err, "could not rename temporary file");
+				print_errcode(err, "could not remove temporary file");
 				return 1;
 			}
 			return 0;
@@ -484,6 +506,9 @@ static int write_file(FSSpec *dest, short tempVol, long tempDir, Ptr data,
 	pb.copyParam.ioNewDirID = dest->parID;
 	pb.copyParam.ioDirID = temp.parID;
 	err = PBHMoveRenameSync(&pb);
+	if (gLogLevel >= kLogVerbose) {
+		log_call(err, "PBHMoveRename");
+	}
 	if (err == 0) {
 		return 0;
 	}
@@ -491,9 +516,6 @@ static int write_file(FSSpec *dest, short tempVol, long tempDir, Ptr data,
 	if (err != paramErr) {
 		print_errcode(err, "could not rename temporary file");
 		goto error;
-	}
-	if (gLogLevel >= kLogVerbose) {
-		fputs("## PBHMoveRename not supported\n", stderr);
 	}
 
 	// Finally, try move and then rename.
@@ -507,6 +529,9 @@ static int write_file(FSSpec *dest, short tempVol, long tempDir, Ptr data,
 		cm.ioNewDirID = dest->parID;
 		cm.ioDirID = temp.parID;
 		err = PBCatMoveSync(&cm);
+		if (gLogLevel >= kLogVerbose) {
+			log_call(err, "PBCatMove");
+		}
 		if (err != 0) {
 			print_errcode(err, "could not move temporary file");
 			goto error;
@@ -518,6 +543,9 @@ static int write_file(FSSpec *dest, short tempVol, long tempDir, Ptr data,
 			fputs("## FSpRename\n", stderr);
 		}
 		err = FSpRename(&temp, dest->name);
+		if (gLogLevel >= kLogVerbose) {
+			log_call(err, "FSpRename");
+		}
 		if (err != 0) {
 			print_errcode(err, "could not rename temporary file");
 			goto error;
@@ -714,6 +742,12 @@ static int command_main(char *destpath, int mode) {
 	}
 
 	// Synchronize the files.
+	if (mode == kModePull) {
+		r = mac_from_unix_init();
+		if (r != 0) {
+			return 1;
+		}
+	}
 	tempVol = 0;
 	tempDir = 0;
 	for (i = 0; i < n; i++) {
@@ -796,6 +830,7 @@ int main(int argc, char **argv) {
 	if (gFiles != NULL) {
 		DisposeHandle(gFiles);
 	}
+	mac_from_unix_term();
 	if (gLogLevel >= kLogVerbose) {
 		fputs("## Done\n", stderr);
 	}

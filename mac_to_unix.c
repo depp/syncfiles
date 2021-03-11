@@ -28,8 +28,8 @@ static const unsigned short kToUnixTable[256] = {
 	184,   733, 731,  711,
 };
 
-void mac_to_unix(unsigned char **outptr, unsigned char *outend,
-                 const unsigned char **inptr, const unsigned char *inend) {
+int mac_to_unix(unsigned char **outptr, unsigned char *outend,
+                const unsigned char **inptr, const unsigned char *inend) {
 	unsigned char *op = *outptr;
 	const unsigned char *ip = *inptr;
 	unsigned cp;
@@ -62,4 +62,5 @@ void mac_to_unix(unsigned char **outptr, unsigned char *outend,
 	}
 	*outptr = op;
 	*inptr = ip;
+	return 0;
 }
