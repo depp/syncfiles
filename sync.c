@@ -9,6 +9,14 @@
 #include <stdio.h>
 #include <string.h>
 
+typedef enum {
+	kLogWarn,
+	kLogInfo,
+	kLogVerbose,
+} log_level;
+
+static log_level gLogLevel = kLogInfo;
+
 enum {
 	// Maximum file size that we will copy.
 	kMaxFileSize = 64 * 1024,
@@ -218,30 +226,34 @@ static int dir_from_path(short *vRefNum, long *dirID, const char *dirpath) {
 
 // Return true if a file with the given name should be included. The name is a
 // Pascal string.
-static int filter_name(unsigned char *name) {
+static int filter_name(const unsigned char *name) {
 	int len, i, stem;
-	unsigned char *ext;
+	const unsigned char *ext;
+	char temp[32];
 
 	if (EqualString(name, "\pmakefile", FALSE, TRUE)) {
 		return 1;
 	}
 	stem = 0;
 	len = name[0];
-	for (i = 0; i < len; i++) {
-		if (name[i + 1] == '.') {
+	for (i = 1; i <= len; i++) {
+		if (name[i] == '.') {
 			stem = i;
 		}
 	}
 	if (stem != 0) {
-		ext = name + 2 + stem;
-		len -= stem + 1;
-		switch (len) {
+		ext = name + stem + 1;
+		switch (len - stem) {
 		case 1:
 			if (ext[0] == 'c' || ext[0] == 'h' || ext[0] == 'r') {
 				return 1;
 			}
 			break;
 		}
+	}
+	if (gLogLevel >= kLogVerbose) {
+		p2cstr(temp, name);
+		fprintf(stderr, "## Ignored: %s\n", temp);
 	}
 	return 0;
 }
@@ -453,6 +465,9 @@ static int write_file(FSSpec *dest, short tempVol, long tempDir, Ptr data,
 			print_errcode(err, "could not delete temp file");
 			return 1;
 		}
+		if (gLogLevel >= kLogVerbose) {
+			fputs("## FSpExchangeFiles not supported\n", stderr);
+		}
 		// Otherwise, delete destination and move temp file over.
 		err = FSpDelete(dest);
 		if (err != 0) {
@@ -477,9 +492,15 @@ static int write_file(FSSpec *dest, short tempVol, long tempDir, Ptr data,
 		print_errcode(err, "could not rename temporary file");
 		goto error;
 	}
+	if (gLogLevel >= kLogVerbose) {
+		fputs("## PBHMoveRename not supported\n", stderr);
+	}
 
 	// Finally, try move and then rename.
 	if (dest->parID != temp.parID) {
+		if (gLogLevel >= kLogVerbose) {
+			fputs("## PBCatMoveSync\n", stderr);
+		}
 		memset(&cm, 0, sizeof(cm));
 		cm.ioNamePtr = temp.name;
 		cm.ioVRefNum = temp.vRefNum;
@@ -493,6 +514,9 @@ static int write_file(FSSpec *dest, short tempVol, long tempDir, Ptr data,
 		temp.parID = dest->parID;
 	}
 	if (memcmp(dest->name, temp.name, dest->name[0] + 1) != 0) {
+		if (gLogLevel >= kLogVerbose) {
+			fputs("## FSpRename\n", stderr);
+		}
 		err = FSpRename(&temp, dest->name);
 		if (err != 0) {
 			print_errcode(err, "could not rename temporary file");
@@ -669,7 +693,11 @@ static int command_main(char *destpath, int mode) {
 	tempDir = 0;
 	for (i = 0; i < n; i++) {
 		file = &array[i];
+		p2cstr(name, file->name);
 		if (file->mode == mode) {
+			if (gLogLevel >= kLogInfo) {
+				fprintf(stderr, "## Writing %s\n", name);
+			}
 			if (mode == kModePush) {
 				// When pushing, we use the destination directory as the
 				// temporary folder, to avoid crossing filesystem boundaries on
@@ -691,13 +719,15 @@ static int command_main(char *destpath, int mode) {
 				              file->meta[kDestDir].modTime);
 			}
 			if (r) {
-				p2cstr(name, file->name);
 				print_err("failed to copy file: %s", name);
 				return 1;
 			}
+			if (gLogLevel >= kLogInfo) {
+				fprintf(stderr, "## Done writing %s\n", name);
+			}
 		} else if (file->mode != kModeAuto) {
-			p2cstr(name, file->name);
-			fprintf(stderr, "## Refusing to overwrite '%s', file is newer\n",
+			fprintf(stderr,
+			        "## Warning: Refusing to overwrite '%s', file is newer\n",
 			        name);
 		}
 	}
@@ -720,6 +750,10 @@ int main(int argc, char **argv) {
 				mode = kModePush;
 			} else if (strcmp(opt, "pull") == 0) {
 				mode = kModePull;
+			} else if (strcmp(opt, "verbose") == 0 || strcmp(opt, "v") == 0) {
+				gLogLevel = kLogVerbose;
+			} else if (strcmp(opt, "quiet") == 0 || strcmp(opt, "q") == 0) {
+				gLogLevel = kLogWarn;
 			} else {
 				print_err("unknown flag: %s", arg);
 				return 1;
@@ -736,6 +770,9 @@ int main(int argc, char **argv) {
 	r = command_main(argv[1], mode);
 	if (gFiles != NULL) {
 		DisposeHandle(gFiles);
+	}
+	if (gLogLevel >= kLogVerbose) {
+		fputs("## Done\n", stderr);
 	}
 	return r;
 }
