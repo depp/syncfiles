@@ -61,7 +61,7 @@ int mac_from_unix(unsigned char **outptr, unsigned char *outend,
 				curvalue = 0;
 			}
 			do {
-				entry = table[*ip++];
+				entry = table[state | *ip++];
 				state = entry & 0xff00;
 				value = entry & 0xff;
 				if (value != 0) {
@@ -77,6 +77,7 @@ int mac_from_unix(unsigned char **outptr, unsigned char *outend,
 			}
 			ip = curpos;
 			*op++ = curvalue;
+			last = 0;
 		}
 	}
 	*outptr = op;
