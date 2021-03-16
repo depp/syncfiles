@@ -299,7 +299,7 @@ static int command_main(char *localPath, char *remotePath, int mode) {
 		}
 		func = mac_from_unix;
 		err =
-			FindFolder(srcVol, kTemporaryFolderType, true, &tempVol, &tempDir);
+			FindFolder(destVol, kTemporaryFolderType, true, &tempVol, &tempDir);
 		if (err != 0) {
 			print_errcode(err, "could not find temporary folder");
 			return 1;
