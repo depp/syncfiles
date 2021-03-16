@@ -88,7 +88,11 @@ Dependencies  ƒ  $OutOfDate
 		{SrcFiles}
 
 #*** Dependencies: Cut here ***
-# These dependencies were produced at 10:53:16 AM on Thu, Mar 11, 2021 by MakeDepend
+# These dependencies were produced at 1:09:52 PM on Tue, Mar 16, 2021 by MakeDepend
+
+:file.c.x :file.c.o	ƒ  ∂
+	:file.c ∂
+	:defs.h
 
 :mac_from_unix.c.x :mac_from_unix.c.o	ƒ  ∂
 	:mac_from_unix.c ∂
@@ -101,5 +105,9 @@ Dependencies  ƒ  $OutOfDate
 
 :sync.c.x :sync.c.o	ƒ  ∂
 	:sync.c ∂
+	:defs.h
+
+:util.c.x :util.c.o	ƒ  ∂
+	:util.c ∂
 	:defs.h
 
