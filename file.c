@@ -112,6 +112,7 @@ static int write_file(FSSpec *dest, short tempVol, long tempDir, Ptr data,
 	Str31 name;
 	OSErr err;
 	int r;
+	bool mustMove, mustRename;
 
 	// Save the data to a temporary file.
 	r = make_temp(&temp, tempVol, tempDir, dest->name);
@@ -202,28 +203,33 @@ static int write_file(FSSpec *dest, short tempVol, long tempDir, Ptr data,
 		}
 	}
 
+	mustMove = dest->parID != temp.parID;
+	mustRename = memcmp(dest->name, temp.name, dest->name[0] + 1) != 0;
+
 	// Next, try MoveRename.
-	memset(&pb, 0, sizeof(pb));
-	pb.copyParam.ioNamePtr = temp.name;
-	pb.copyParam.ioVRefNum = temp.vRefNum;
-	pb.copyParam.ioNewName = dest->name;
-	pb.copyParam.ioNewDirID = dest->parID;
-	pb.copyParam.ioDirID = temp.parID;
-	err = PBHMoveRenameSync(&pb);
-	if (gLogLevel >= kLogVerbose) {
-		log_call(err, "PBHMoveRename");
-	}
-	if (err == 0) {
-		return 0;
-	}
-	// paramErr: function not supported by volume.
-	if (err != paramErr) {
-		print_errcode(err, "could not rename temporary file");
-		goto error;
+	if (mustMove && mustRename) {
+		memset(&pb, 0, sizeof(pb));
+		pb.copyParam.ioNamePtr = temp.name;
+		pb.copyParam.ioVRefNum = temp.vRefNum;
+		pb.copyParam.ioNewName = dest->name;
+		pb.copyParam.ioNewDirID = dest->parID;
+		pb.copyParam.ioDirID = temp.parID;
+		err = PBHMoveRenameSync(&pb);
+		if (gLogLevel >= kLogVerbose) {
+			log_call(err, "PBHMoveRename");
+		}
+		if (err == 0) {
+			return 0;
+		}
+		// paramErr: function not supported by volume.
+		if (err != paramErr) {
+			print_errcode(err, "could not rename temporary file");
+			goto error;
+		}
 	}
 
 	// Finally, try move and then rename.
-	if (dest->parID != temp.parID) {
+	if (mustMove) {
 		memset(&cm, 0, sizeof(cm));
 		cm.ioNamePtr = temp.name;
 		cm.ioVRefNum = temp.vRefNum;
@@ -239,7 +245,7 @@ static int write_file(FSSpec *dest, short tempVol, long tempDir, Ptr data,
 		}
 		temp.parID = dest->parID;
 	}
-	if (memcmp(dest->name, temp.name, dest->name[0] + 1) != 0) {
+	if (mustRename) {
 		err = FSpRename(&temp, dest->name);
 		if (gLogLevel >= kLogVerbose) {
 			log_call(err, "FSpRename");
