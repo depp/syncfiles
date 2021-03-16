@@ -266,9 +266,9 @@ error:
 	return 1;
 }
 
-int sync_file(struct file_info *file, convert_func func, long srcVol,
-              short srcDir, long destVol, short destDir, long tempVol,
-              short tempDir) {
+int sync_file(struct file_info *file, convert_func func, short srcVol,
+              long srcDir, short destVol, long destDir, short tempVol,
+              long tempDir) {
 	FSSpec src, dest;
 	Ptr srcData = NULL, destData = NULL;
 	long srcLength, destLength;

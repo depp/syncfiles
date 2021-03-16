@@ -87,9 +87,9 @@ struct file_info {
 
 // Synchronize a file according to the action in the action field. The temporary
 // directory must be a valid directory on the destination volume.
-int sync_file(struct file_info *file, convert_func func, long srcVol,
-              short srcDir, long destVol, short destDir, long tempVol,
-              short tempDir);
+int sync_file(struct file_info *file, convert_func func, short srcVol,
+              long srcDir, short destVol, long destDir, short tempVol,
+              long tempDir);
 
 // =============================================================================
 // conversion
