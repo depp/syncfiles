@@ -92,20 +92,17 @@ static int make_temp(FSSpec *temp, short vRefNum, long dirID,
 	memcpy(tname + 1 + pfxlen, ".tmp", 4);
 	tname[0] = pfxlen + 4;
 	err = FSMakeFSSpec(vRefNum, dirID, tname, temp);
-	if (err == 0) {
-		print_err("temporary file exists");
-		return 1;
-	} else if (err == fnfErr) {
-		return 0;
-	} else {
+	if (err != 0 && err != fnfErr) {
 		print_errcode(err, "could not create temp file spec");
 		return 1;
 	}
+	return 0;
 }
 
 // Write the entire contents of a file.
 static int write_file(FSSpec *dest, short tempVol, long tempDir, Ptr data,
                       long length, long modTime, file_action action) {
+	OSType creator = 'MPS ', fileType = 'TEXT';
 	FSSpec temp;
 	long pos, amt;
 	short ref;
@@ -121,7 +118,15 @@ static int write_file(FSSpec *dest, short tempVol, long tempDir, Ptr data,
 	if (r != 0) {
 		return 1;
 	}
-	err = FSpCreate(&temp, 'MPS ', 'TEXT', smSystemScript);
+	err = FSpCreate(&temp, creator, fileType, smSystemScript);
+	if (err == dupFNErr) {
+		err = FSpDelete(&temp);
+		if (err != 0) {
+			print_errcode(err, "could not delete existing temp file");
+			return 1;
+		}
+		err = FSpCreate(&temp, creator, fileType, smSystemScript);
+	}
 	if (err != 0) {
 		print_errcode(err, "could not create file");
 		return 1;
