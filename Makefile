@@ -8,21 +8,27 @@ COptions-68K = {COptions} {Sym-68K}
 ### Source Files ###
 
 SrcFiles = ∂
+	file.c ∂
 	mac_from_unix.c ∂
 	mac_to_unix.c ∂
-	sync.c
+	sync.c ∂
+	util.c
 
 ### Object Files ###
 
 ObjFiles-PPC = ∂
+	file.c.x ∂
 	mac_from_unix.c.x ∂
 	mac_to_unix.c.x ∂
-	sync.c.x
+	sync.c.x ∂
+	util.c.x
 
 ObjFiles-68K = ∂
+	file.c.o ∂
 	mac_from_unix.c.o ∂
 	mac_to_unix.c.o ∂
-	sync.c.o
+	sync.c.o ∂
+	util.c.o
 
 ### Libraries ###
 

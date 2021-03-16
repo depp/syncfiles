@@ -5,151 +5,26 @@
 #include <MacMemory.h>
 #include <StringCompare.h>
 
-#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
-typedef enum {
-	kLogWarn,
-	kLogInfo,
-	kLogVerbose,
-} log_level;
+log_level gLogLevel;
+bool gFlagForce;
+bool gFlagDryRun;
+bool gFlagDelete;
 
-static log_level gLogLevel = kLogInfo;
+static const char *kActionName[] = {
+	"no action",
+	"new",
+	"replace",
+	"delete",
+};
 
+// Global operation mode
 enum {
-	// Maximum file size that we will copy.
-	kMaxFileSize = 64 * 1024,
-};
-
-typedef int (*convert_func)(unsigned char **outptr, unsigned char *outend,
-                            const unsigned char **inptr,
-                            const unsigned char *inend);
-
-void print_err(const char *msg, ...) {
-	va_list ap;
-	fputs("## Error: ", stderr);
-	va_start(ap, msg);
-	vfprintf(stderr, msg, ap);
-	va_end(ap);
-	fputc('\n', stderr);
-}
-
-// Map from OSErr codes to messages. As a heuristic, this should include error
-// codes caused by toolbox calls in this program which are readily understood by
-// the user. It can exclude error codes that are likely to indicate a
-// programming error.
-struct error_message {
-	OSErr err;
-	const char *msg;
-};
-#define E(e, m) \
-	{ e, m "\0" #e }
-const struct error_message kErrorMessages[] = {
-	E(dirFulErr, "directory full"),                                   // -33
-	E(dskFulErr, "disk full"),                                        // -34
-	E(ioErr, "I/O error"),                                            // -36
-	E(bdNamErr, "bad name"),                                          // -37
-	E(fnfErr, "file not found"),                                      // -43
-	E(wPrErr, "disk is write-protected"),                             // -44
-	E(fLckdErr, "file is locked"),                                    // -45
-	E(vLckdErr, "volume is locked"),                                  // -46
-	E(fBsyErr, "file is busy"),                                       // -47
-	E(dupFNErr, "destination already exists"),                        // -48
-	E(opWrErr, "file already open for writing"),                      // -49
-	E(paramErr, "parameter error"),                                   // -50
-	E(permErr, "cannot write to locked file"),                        // -54
-	E(dirNFErr, "directory not found"),                               // -120
-	E(wrgVolTypErr, "not an HFS volume"),                             // -123
-	E(diffVolErr, "files on different volumes"),                      // -1303
-	E(afpAccessDenied, "user does not have access privileges (AFP)"), // -5000
-	E(afpObjectTypeErr,
-      "file/directory specified where directory/file expected"), // -5025
-	E(afpSameObjectErr, "objects are the same"),                 // -5038
-};
-
-static const char *mac_strerror(OSErr err) {
-	int i, n = sizeof(kErrorMessages) / sizeof(*kErrorMessages);
-	for (i = 0; i < n; i++) {
-		if (kErrorMessages[i].err == err) {
-			return kErrorMessages[i].msg;
-		}
-	}
-	return NULL;
-}
-
-void print_errcode(int err, const char *msg, ...) {
-	va_list ap;
-	const char *emsg;
-
-	fputs("## Error: ", stderr);
-	va_start(ap, msg);
-	vfprintf(stderr, msg, ap);
-	va_end(ap);
-	emsg = mac_strerror(err);
-	if (emsg != NULL) {
-		fprintf(stderr, ": %s (%d)\n", emsg, err);
-	} else {
-		fprintf(stderr, ": err=%d\n", err);
-	}
-}
-
-static void log_call(int err, const char *function) {
-	const char *emsg;
-
-	if (err == 0) {
-		fprintf(stderr, "## %s: noErr\n", function);
-		return;
-	}
-	emsg = mac_strerror(err);
-	if (emsg != NULL) {
-		emsg += strlen(emsg) + 1;
-		fprintf(stderr, "## %s: %s (%d)\n", function, emsg, err);
-	} else {
-		fprintf(stderr, "## %s: %d\n", function, err);
-	}
-}
-
-// Convert a C to Pascal string.
-static int c2pstr(Str255 ostr, const char *istr) {
-	size_t n = strlen(istr);
-	if (n > 255) {
-		print_err("path too long: %s", istr);
-		return 1;
-	}
-	ostr[0] = n;
-	memcpy(ostr + 1, istr, n);
-	memset(ostr + 1 + n, 0, 255 - n);
-	return 0;
-}
-
-// Convert a Pascal to C string.
-static void p2cstr(char *ostr, const unsigned char *istr) {
-	unsigned len = istr[0];
-	memcpy(ostr, istr + 1, len);
-	ostr[len] = '\0';
-}
-
-struct file_meta {
-	Boolean exists;
-	long modTime;
-};
-
-enum {
-	kSrcDir,
-	kDestDir,
-};
-
-enum {
-	kModeAuto,
+	kModeUnknown,
 	kModePush,
 	kModePull,
-};
-
-struct file_info {
-	Str31 name;
-	struct file_meta meta[2];
-	int mode;
 };
 
 // Array of metadata entries for files.
@@ -250,7 +125,7 @@ static int filter_name(const unsigned char *name) {
 	const unsigned char *ext;
 	char temp[32];
 
-	if (EqualString(name, "\pmakefile", FALSE, TRUE)) {
+	if (EqualString(name, "\pmakefile", false, true)) {
 		return 1;
 	}
 	stem = 0;
@@ -304,7 +179,7 @@ static int list_dir(short vRefNum, long dirID, int which) {
 		    filter_name(ppath)) {
 			ppath[ppath[0] + 1] = '\0';
 			file = get_file(ppath);
-			file->meta[which].exists = TRUE;
+			file->meta[which].exists = true;
 			file->meta[which].modTime = ci.hFileInfo.ioFlMdDat;
 		}
 	}
@@ -312,348 +187,49 @@ static int list_dir(short vRefNum, long dirID, int which) {
 	return 0;
 }
 
-// Read the entire data fork of a file. The result must be freed with
-// DisposePtr.
-static int read_file(FSSpec *spec, Ptr *data, long *length) {
-	CInfoPBRec ci;
-	Ptr ptr;
-	long dataLength, pos, count;
+static int command_main(char *localPath, char *remotePath, int mode) {
+	short localVol, remoteVol, srcVol, destVol, tempVol;
+	long localDir, remoteDir, srcDir, destDir, tempDir;
+	struct file_info *array, *file;
 	OSErr err;
-	short fref;
-
-	// Get file size.
-	memset(&ci, 0, sizeof(ci));
-	ci.hFileInfo.ioNamePtr = spec->name;
-	ci.hFileInfo.ioVRefNum = spec->vRefNum;
-	ci.hFileInfo.ioDirID = spec->parID;
-	err = PBGetCatInfoSync(&ci);
-	if (err != 0) {
-		print_errcode(err, "could not get file metadata");
-		return 1;
-	}
-	if ((ci.hFileInfo.ioFlAttrib & kioFlAttribDirMask) != 0) {
-		print_err("is a directory");
-		return 1;
-	}
-	dataLength = ci.hFileInfo.ioFlLgLen;
-	if (dataLength > kMaxFileSize) {
-		print_err("file is too large: size=%ld, max=%ld", dataLength,
-		          kMaxFileSize);
-		return 1;
-	}
-
-	// Allocate memory.
-	ptr = NewPtr(dataLength);
-	err = MemError();
-	if (err != 0) {
-		print_errcode(err, "out of memory");
-		return 1;
-	}
-
-	// Read file.
-	err = FSpOpenDF(spec, fsRdPerm, &fref);
-	if (err != 0) {
-		DisposePtr(ptr);
-		print_errcode(err, "could not open file");
-		return 1;
-	}
-	pos = 0;
-	while (pos < dataLength) {
-		count = dataLength - pos;
-		err = FSRead(fref, &count, ptr + pos);
-		if (err != 0) {
-			DisposePtr(ptr);
-			FSClose(fref);
-			print_errcode(err, "could not read file");
-			return 1;
-		}
-		pos += count;
-	}
-	FSClose(fref);
-	*data = ptr;
-	*length = dataLength;
-	return 0;
-}
-
-// Make an FSSpec for a temporary file.
-static int make_temp(FSSpec *temp, short vRefNum, long dirID,
-                     const unsigned char *name) {
-	Str31 tname;
-	unsigned pfxlen, maxpfx = 31 - 4;
-	OSErr err;
-
-	pfxlen = name[0];
-	if (pfxlen > maxpfx) {
-		pfxlen = maxpfx;
-	}
-	memcpy(tname + 1, name + 1, pfxlen);
-	memcpy(tname + 1 + pfxlen, ".tmp", 4);
-	tname[0] = pfxlen + 4;
-	err = FSMakeFSSpec(vRefNum, dirID, tname, temp);
-	if (err == 0) {
-		print_err("temporary file exists");
-		return 1;
-	} else if (err == fnfErr) {
-		return 0;
-	} else {
-		print_errcode(err, "could not create temp file spec");
-		return 1;
-	}
-}
-
-// Write the entire contents of a file.
-static int write_file(FSSpec *dest, short tempVol, long tempDir, Ptr data,
-                      long length, long modTime, Boolean destExists) {
-	FSSpec temp;
-	long pos, amt;
-	short ref;
-	HParamBlockRec pb;
-	CMovePBRec cm;
-	CInfoPBRec ci;
-	Str31 name;
-	OSErr err;
-	int r;
-
-	// Save the data to a temporary file.
-	r = make_temp(&temp, tempVol, tempDir, dest->name);
-	if (r != 0) {
-		return 1;
-	}
-	err = FSpCreate(&temp, 'MPS ', 'TEXT', smSystemScript);
-	if (err != 0) {
-		print_errcode(err, "could not create file");
-		return 1;
-	}
-	err = FSpOpenDF(&temp, fsRdWrPerm, &ref);
-	if (err != 0) {
-		print_errcode(err, "could not open temp file");
-		goto error;
-	}
-	pos = 0;
-	while (pos < length) {
-		amt = length - pos;
-		err = FSWrite(ref, &amt, data + pos);
-		if (err != 0) {
-			FSClose(ref);
-			print_errcode(err, "could not write temp file");
-			goto error;
-		}
-		pos += amt;
-	}
-	err = FSClose(ref);
-	if (err != 0) {
-		print_errcode(err, "could not close temp file");
-		goto error;
-	}
-
-	// Update the modification time.
-	memset(&ci, 0, sizeof(ci));
-	memcpy(name, temp.name, temp.name[0] + 1);
-	ci.hFileInfo.ioNamePtr = name;
-	ci.hFileInfo.ioVRefNum = temp.vRefNum;
-	ci.hFileInfo.ioDirID = temp.parID;
-	err = PBGetCatInfoSync(&ci);
-	if (err != 0) {
-		print_errcode(err, "could not get temp file info");
-		goto error;
-	}
-	memcpy(name, temp.name, temp.name[0] + 1);
-	ci.hFileInfo.ioNamePtr = name;
-	ci.hFileInfo.ioVRefNum = temp.vRefNum;
-	ci.hFileInfo.ioDirID = temp.parID;
-	ci.hFileInfo.ioFlMdDat = modTime;
-	err = PBSetCatInfoSync(&ci);
-	if (err != 0) {
-		print_errcode(err, "could not set temp file info");
-		goto error;
-	}
-
-	// First, try to exchange files if destination exists.
-	if (destExists) {
-		err = FSpExchangeFiles(&temp, dest);
-		if (gLogLevel >= kLogVerbose) {
-			log_call(err, "FSpExchangeFiles");
-		}
-		if (err == 0) {
-			err = FSpDelete(&temp);
-			if (err != 0) {
-				print_errcode(err, "could not remove temporary file");
-				return 1;
-			}
-			return 0;
-		}
-		// paramErr: function not supported by volume.
-		if (err != paramErr) {
-			print_errcode(err, "could not delete temp file");
-			return 1;
-		}
-		if (gLogLevel >= kLogVerbose) {
-			fputs("## FSpExchangeFiles not supported\n", stderr);
-		}
-		// Otherwise, delete destination and move temp file over.
-		err = FSpDelete(dest);
-		if (err != 0) {
-			print_errcode(err, "could not remove destination file");
-			goto error;
-		}
-	}
-
-	// Next, try MoveRename.
-	memset(&pb, 0, sizeof(pb));
-	pb.copyParam.ioNamePtr = temp.name;
-	pb.copyParam.ioVRefNum = temp.vRefNum;
-	pb.copyParam.ioNewName = dest->name;
-	pb.copyParam.ioNewDirID = dest->parID;
-	pb.copyParam.ioDirID = temp.parID;
-	err = PBHMoveRenameSync(&pb);
-	if (gLogLevel >= kLogVerbose) {
-		log_call(err, "PBHMoveRename");
-	}
-	if (err == 0) {
-		return 0;
-	}
-	// paramErr: function not supported by volume.
-	if (err != paramErr) {
-		print_errcode(err, "could not rename temporary file");
-		goto error;
-	}
-
-	// Finally, try move and then rename.
-	if (dest->parID != temp.parID) {
-		if (gLogLevel >= kLogVerbose) {
-			fputs("## PBCatMoveSync\n", stderr);
-		}
-		memset(&cm, 0, sizeof(cm));
-		cm.ioNamePtr = temp.name;
-		cm.ioVRefNum = temp.vRefNum;
-		cm.ioNewDirID = dest->parID;
-		cm.ioDirID = temp.parID;
-		err = PBCatMoveSync(&cm);
-		if (gLogLevel >= kLogVerbose) {
-			log_call(err, "PBCatMove");
-		}
-		if (err != 0) {
-			print_errcode(err, "could not move temporary file");
-			goto error;
-		}
-		temp.parID = dest->parID;
-	}
-	if (memcmp(dest->name, temp.name, dest->name[0] + 1) != 0) {
-		if (gLogLevel >= kLogVerbose) {
-			fputs("## FSpRename\n", stderr);
-		}
-		err = FSpRename(&temp, dest->name);
-		if (gLogLevel >= kLogVerbose) {
-			log_call(err, "FSpRename");
-		}
-		if (err != 0) {
-			print_errcode(err, "could not rename temporary file");
-			goto error;
-		}
-	}
-
-	return 0;
-
-error:
-	err = FSpDelete(&temp);
-	if (err != 0) {
-		print_errcode(err, "could not delete temp file");
-	}
-	return 1;
-}
-
-// Copy the source file to the destination file. A temporary file is created in
-// the specified temporary directory.
-static int sync_file(struct file_info *file, convert_func func, long srcVol,
-                     short srcDir, long destVol, short destDir, long tempVol,
-                     short tempDir, long modTime) {
-	FSSpec src, dest;
-	Ptr srcData = NULL, destData = NULL;
-	long srcLength, destLength;
-	int r;
-	OSErr err;
-	unsigned char *outptr, *outend;
-	const unsigned char *inptr, *inend;
-	Boolean destExists;
-
-	// Create file specs.
-	err = FSMakeFSSpec(srcVol, srcDir, file->name, &src);
-	if (err != 0) {
-		print_errcode(err, "could not create source spec");
-		return 1;
-	}
-	err = FSMakeFSSpec(destVol, destDir, file->name, &dest);
-	if (err == 0) {
-		destExists = TRUE;
-	} else if (err == fnfErr) {
-		destExists = FALSE;
-	} else if (err != 0) {
-		print_errcode(err, "could not create destination spec");
-		return 1;
-	}
-
-	// Read the source file into memory.
-	r = read_file(&src, &srcData, &srcLength);
-	if (r != 0) {
-		return 1;
-	}
-	// Convert data.
-	destLength = srcLength + (srcLength >> 2) + 16;
-	destData = NewPtr(destLength);
-	err = MemError();
-	if (err != 0) {
-		print_errcode(err, "out of memory");
-		goto error;
-	}
-	outptr = (unsigned char *)destData;
-	outend = outptr + destLength;
-	inptr = (unsigned char *)srcData;
-	inend = inptr + srcLength;
-	func(&outptr, outend, &inptr, inend);
-	if (inptr != inend) {
-		print_err("conversion function failed");
-		goto error;
-	}
-	destLength = outptr - (unsigned char *)destData;
-	r = write_file(&dest, tempVol, tempDir, destData, destLength, destExists,
-	               modTime);
-	if (r != 0) {
-		goto error;
-	}
-
-	// Clean up.
-	DisposePtr(srcData);
-	DisposePtr(destData);
-	return 0;
-
-error:
-	if (srcData != NULL) {
-		DisposePtr(srcData);
-	}
-	if (destData != NULL) {
-		DisposePtr(destData);
-	}
-	return 1;
-}
-
-static int command_main(char *destpath, int mode) {
-	short srcVol, destVol, tempVol;
-	long srcDir, destDir, tempDir;
-	struct file_info *array, *file, *srcNewer, *destNewer;
-	OSErr err;
-	int r, i, j, n;
+	int r, i, n;
 	char name[32];
-	const char *modeStr;
+	bool hasAction;
+	convert_func func;
 
-	// Get handles to src and dest directories.
-	err = HGetVol(NULL, &srcVol, &srcDir);
-	if (err != 0) {
-		print_errcode(err, "HGetVol");
-		return 1;
+	// Get handles to local and remote directories.
+	if (localPath == NULL) {
+		err = HGetVol(NULL, &localVol, &localDir);
+		if (err != 0) {
+			print_errcode(err, "HGetVol");
+			return 1;
+		}
+	} else {
+		r = dir_from_path(&localVol, &localDir, localPath);
+		if (r != 0) {
+			return 1;
+		}
 	}
-	r = dir_from_path(&destVol, &destDir, destpath);
+	r = dir_from_path(&remoteVol, &remoteDir, remotePath);
 	if (r != 0) {
 		return 1;
+	}
+	if (localVol == remoteVol && localDir == remoteDir) {
+		print_err("local and remote are the same directory");
+		return 1;
+	}
+
+	// Get source and destination directories.
+	if (mode == kModePull) {
+		srcVol = remoteVol;
+		srcDir = remoteDir;
+		destVol = localVol;
+		destDir = localDir;
+	} else {
+		srcVol = localVol;
+		srcDir = localDir;
+		destVol = remoteVol;
+		destDir = remoteDir;
 	}
 
 	// List files in src and dest directories.
@@ -661,12 +237,12 @@ static int command_main(char *destpath, int mode) {
 	if (r != 0) {
 		return 1;
 	}
-	r = list_dir(destVol, destDir, kDestDir);
-	if (r != 0) {
+	if (gFileCount == 0) {
+		print_err("no files in source directory");
 		return 1;
 	}
-	if (gFileCount == 0) {
-		print_err("no files");
+	r = list_dir(destVol, destDir, kDestDir);
+	if (r != 0) {
 		return 1;
 	}
 
@@ -674,71 +250,45 @@ static int command_main(char *destpath, int mode) {
 	array = (struct file_info *)*gFiles;
 	n = gFileCount;
 
-	// Figure out the direction for each file.
-	srcNewer = NULL;
-	destNewer = NULL;
+	// Assign actions to each file.
+	hasAction = false;
 	for (i = 0; i < n; i++) {
 		file = &array[i];
+		file->action = kActionNone;
 		if (!file->meta[kSrcDir].exists) {
-			file->mode = kModePull;
-			destNewer = file;
+			if (gFlagDelete) {
+				file->action = kActionDelete;
+				hasAction = true;
+			}
 		} else if (!file->meta[kDestDir].exists) {
-			file->mode = kModePush;
-			srcNewer = file;
-		} else if (file->meta[kSrcDir].modTime < file->meta[kDestDir].modTime) {
-			file->mode = kModePull;
-			destNewer = file;
-		} else if (file->meta[kSrcDir].modTime > file->meta[kDestDir].modTime) {
-			file->mode = kModePush;
-			srcNewer = file;
-		}
-		if (gLogLevel >= kLogVerbose) {
+			file->action = kActionNew;
+			hasAction = true;
+		} else if (gFlagForce ||
+		           file->meta[kSrcDir].modTime > file->meta[kDestDir].modTime) {
+			file->action = kActionReplace;
+			hasAction = true;
+		} else if (file->meta[kDestDir].modTime <
+		           file->meta[kDestDir].modTime) {
 			p2cstr(name, file->name);
-			switch (file->mode) {
-			default:
-			case kModeAuto:
-				modeStr = "equal";
-				break;
-			case kModePull:
-				modeStr = "destNewer";
-				break;
-			case kModePush:
-				modeStr = "srcNewer";
-				break;
-			}
-			fprintf(stderr, "## File: %s %s", name, modeStr);
-			for (j = 0; j < 2; j++) {
-				if (!file->meta[j].exists) {
-					fputs(" -", stderr);
-				} else {
-					fprintf(stderr, " %ld", file->meta[j].modTime);
-				}
-			}
-			fputc('\n', stderr);
+			fprintf(stderr, "## Warning: destination file is newer: %s\n",
+			        name);
 		}
 	}
 
-	// Figure out the mode: push or pull.
-	if (mode == kModeAuto) {
-		if (srcNewer != NULL) {
-			if (destNewer != NULL) {
-				fputs("## Error: both source and destination have new files\n",
-				      stderr);
-				p2cstr(name, srcNewer->name);
-				fprintf(stderr, "## New file in source: %s\n", name);
-				p2cstr(name, destNewer->name);
-				fprintf(stderr, "## New file in destination: %s\n", name);
-				return 1;
-			}
-			mode = kModePush;
-			fputs("## Mode: push\n", stderr);
-		} else if (destNewer != NULL) {
-			mode = kModePull;
-			fputs("## Mode: pull\n", stderr);
-		} else {
-			fputs("## No changes.\n", stderr);
-			return 0;
+	// Early exit if there are no actions.
+	if (!hasAction) {
+		fputs("## No actions\n", stderr);
+		return 0;
+	}
+
+	// Print actions for a dry run.
+	if (gFlagDryRun) {
+		for (i = 0; i < n; i++) {
+			file = &array[i];
+			p2cstr(name, file->name);
+			fprintf(stderr, "## %s: %s\n", kActionName[file->action], name);
 		}
+		return 0;
 	}
 
 	// Synchronize the files.
@@ -747,47 +297,29 @@ static int command_main(char *destpath, int mode) {
 		if (r != 0) {
 			return 1;
 		}
+		func = mac_from_unix;
+		err =
+			FindFolder(srcVol, kTemporaryFolderType, true, &tempVol, &tempDir);
+		if (err != 0) {
+			print_errcode(err, "could not find temporary folder");
+			return 1;
+		}
+	} else {
+		func = mac_to_unix;
+		// When pushing, we use the destination directory as the temporary
+		// folder, to avoid crossing filesystem boundaries on the host.
+		tempVol = destVol;
+		tempDir = destDir;
 	}
-	tempVol = 0;
-	tempDir = 0;
 	for (i = 0; i < n; i++) {
 		file = &array[i];
 		p2cstr(name, file->name);
-		if (file->mode == mode) {
-			if (gLogLevel >= kLogInfo) {
-				fprintf(stderr, "## Writing %s\n", name);
-			}
-			if (mode == kModePush) {
-				// When pushing, we use the destination directory as the
-				// temporary folder, to avoid crossing filesystem boundaries on
-				// the host.
-				r = sync_file(file, mac_to_unix, srcVol, srcDir, destVol,
-				              destDir, destVol, destDir,
-				              file->meta[kSrcDir].modTime);
-			} else {
-				if (tempDir == 0) {
-					err = FindFolder(srcVol, kTemporaryFolderType, TRUE,
-					                 &tempVol, &tempDir);
-					if (err != 0) {
-						print_errcode(err, "could not find temporary folder");
-						return 1;
-					}
-				}
-				r = sync_file(file, mac_to_unix, destVol, destDir, srcVol,
-				              srcDir, tempVol, tempDir,
-				              file->meta[kDestDir].modTime);
-			}
-			if (r) {
-				print_err("failed to copy file: %s", name);
-				return 1;
-			}
-			if (gLogLevel >= kLogVerbose) {
-				fprintf(stderr, "## Done writing %s\n", name);
-			}
-		} else if (file->mode != kModeAuto) {
-			fprintf(stderr,
-			        "## Warning: Refusing to overwrite '%s', file is newer\n",
-			        name);
+		fprintf(stderr, "## %s: %s\n", kActionName[file->action], name);
+		r = sync_file(&array[i], func, srcVol, srcDir, destVol, destDir,
+		              tempVol, tempDir);
+		if (r != 0) {
+			print_err("failed to synchronize file: %s", name);
+			return 1;
 		}
 	}
 
@@ -795,8 +327,8 @@ static int command_main(char *destpath, int mode) {
 }
 
 int main(int argc, char **argv) {
-	char *destDir = NULL, *arg, *opt;
-	int i, r, mode = kModeAuto;
+	char *remoteDir = NULL, *localDir = NULL, *arg, *opt;
+	int i, r, mode = kModeUnknown;
 
 	for (i = 1; i < argc; i++) {
 		arg = argv[i];
@@ -813,20 +345,36 @@ int main(int argc, char **argv) {
 				gLogLevel = kLogVerbose;
 			} else if (strcmp(opt, "quiet") == 0 || strcmp(opt, "q") == 0) {
 				gLogLevel = kLogWarn;
+			} else if (strcmp(opt, "force") == 0 || strcmp(opt, "f") == 0) {
+				gFlagForce = true;
+			} else if (strcmp(opt, "dir") == 0) {
+				if (i + 1 >= argc) {
+					print_err("expected argument for -dir");
+					return 1;
+				}
+				localDir = argv[++i];
+			} else if (strcmp(opt, "dry-run") == 0 || strcmp(opt, "n") == 0) {
+				gFlagDryRun = true;
+			} else if (strcmp(opt, "delete") == 0 || strcmp(opt, "d") == 0) {
+				gFlagDelete = true;
 			} else {
 				print_err("unknown flag: %s", arg);
 				return 1;
 			}
 		} else {
-			if (destDir != NULL) {
+			if (remoteDir != NULL) {
 				print_err("unexpected argument: %s", arg);
 				return 1;
 			}
-			destDir = arg;
+			remoteDir = arg;
 		}
 	}
+	if (mode == kModeUnknown) {
+		print_err("either -push or -pull is required");
+		return 1;
+	}
 
-	r = command_main(argv[1], mode);
+	r = command_main(localDir, remoteDir, mode);
 	if (gFiles != NULL) {
 		DisposeHandle(gFiles);
 	}
