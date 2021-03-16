@@ -1,12 +1,23 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"strconv"
 
 	"golang.org/x/text/unicode/norm"
 )
+
+var (
+	flagDumpSequences   bool
+	flagDumpTransitions bool
+)
+
+func init() {
+	flag.BoolVar(&flagDumpSequences, "dump-sequences", false, "dump Unicode sequences")
+	flag.BoolVar(&flagDumpTransitions, "dump-transitions", false, "dump state machine state transition tables")
+}
 
 var characters [256]uint16
 
@@ -63,6 +74,9 @@ func genStates() *state {
 			b := bytes[len(bytes)-1]
 			if st.chars[b] == 0 {
 				st.chars[b] = uint8(m)
+				if flagDumpSequences {
+					fmt.Fprintf(os.Stderr, "%02x: %x\n", m, bytes)
+				}
 			}
 		}
 	}
@@ -102,6 +116,29 @@ func (s *state) genTable() []uint16 {
 		panic("bad table")
 	}
 	return table
+}
+
+func dumpTransitions(table []uint16) {
+	n := len(table) >> 8
+	for i := 0; i < n; i++ {
+		t := table[i<<8 : (i+1)<<8]
+		fmt.Fprintf(os.Stderr, "State $%02x\n", i)
+		for m, v := range t {
+			if v != 0 {
+				fmt.Fprintf(os.Stderr, "    $%02x ->", m)
+				st := v >> 8
+				chr := v & 255
+				if st != 0 {
+					fmt.Fprintf(os.Stderr, " state $%02x", st)
+				}
+				if chr != 0 {
+					fmt.Fprintf(os.Stderr, " char $%02x", chr)
+				}
+				fmt.Fprintln(os.Stderr)
+			}
+		}
+		fmt.Fprintln(os.Stderr)
+	}
 }
 
 func tableToBytes(t []uint16) []byte {
@@ -204,8 +241,13 @@ func printData(f *os.File, ulen int, data []byte) error {
 }
 
 func main() {
+	flag.Parse()
+
 	root := genStates()
 	table := root.genTable()
+	if flagDumpTransitions {
+		dumpTransitions(table)
+	}
 	bytes := tableToBytes(table)
 	// printTable(table)
 	bits := packBits(bytes)
