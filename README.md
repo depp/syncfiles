@@ -8,7 +8,7 @@ SyncFiles is a tool for MPW (Macintosh Programmer’s Workshop) which synchroniz
 
 - Sets the modification timestamp of the destination file to match the timestamp of the source file.
 
-- Only synchronizes files which match hard-coded patterns: copies the Makefile and any files matching `*.c`, `*.h`, or `*.r`.
+- Only synchronizes files which match hard-coded patterns.
 
 - Converts files to UTF-8 and LF line endings for Unix systems; converts to Mac OS Roman and CR line endings for Macintosh systems.
 
@@ -17,6 +17,14 @@ SyncFiles is a tool for MPW (Macintosh Programmer’s Workshop) which synchroniz
 ## Limitations
 
 There is a hard-coded maximum file size of 64 KiB.
+
+## File Patterns
+
+Copies files named Makefile, and files with the following extensions:
+
+- C: `.c` `.h`
+
+- C++: `.cc` `.cp` `.cpp` `.cxx` `.hh` `.hpp` `.hxx`
 
 ## Usage
 

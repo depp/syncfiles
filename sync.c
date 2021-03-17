@@ -124,6 +124,7 @@ static int filter_name(const unsigned char *name) {
 	int len, i, stem;
 	const unsigned char *ext;
 	char temp[32];
+	unsigned char c0, c1, c2;
 
 	if (EqualString(name, "\pmakefile", false, true)) {
 		return 1;
@@ -139,7 +140,28 @@ static int filter_name(const unsigned char *name) {
 		ext = name + stem + 1;
 		switch (len - stem) {
 		case 1:
-			if (ext[0] == 'c' || ext[0] == 'h' || ext[0] == 'r') {
+			// .c .h .r
+			c0 = ext[0];
+			if (c0 == 'c' || c0 == 'h' || c0 == 'r') {
+				return 1;
+			}
+			break;
+		case 2:
+			// .cc .cp .hh
+			c0 = ext[0];
+			c1 = ext[1];
+			if (c0 == 'c' && (c1 == 'c' || c1 == 'p') ||
+			    c0 == 'h' && c1 == 'h') {
+				return 1;
+			}
+			break;
+		case 3:
+			// .cpp .hpp .cxx .hxx
+			c0 = ext[0];
+			c1 = ext[1];
+			c2 = ext[2];
+			if ((c0 == 'c' || c0 == 'h') &&
+			    (c1 == 'p' && c2 == 'p' || c1 == 'x' && c2 == 'x')) {
 				return 1;
 			}
 			break;
