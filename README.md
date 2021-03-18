@@ -57,3 +57,7 @@ SyncFiles <DestPath> -pull
 - `-dir`: Specify an alternat Macintosh directory to push from or pull to. By default, pushes from and pulls to the current directory.
 
 - `-delete`: Delete files in destination which are missing from source.
+
+## License
+
+SyncFiles is distributed under the terms of the MIT license. See LICENSE.txt for details.
