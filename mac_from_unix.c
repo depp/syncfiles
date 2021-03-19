@@ -12,7 +12,8 @@ static void print_uerr(const unsigned char *start, const unsigned char *end) {
 	int lineno = 1, colno = 0;
 	for (ptr = start; ptr != end; ptr++) {
 		colno++;
-		if (*ptr == '\r') {
+		// Note: \r != 0x0d, \n != 0x0a on old Mac compilers.
+		if (*ptr == 0x0a || *ptr == 0x0d) {
 			lineno++;
 			colno = 0;
 		}
@@ -37,8 +38,9 @@ int mac_from_unix(unsigned char **outptr, unsigned char *outend,
 	while (ip < inend && op < outend) {
 		c = *ip;
 		if (c < 128) {
-			if (c == '\n') {
-				c = '\r';
+			// Note: \r != 0x0d, \n != 0x0a on old Mac compilers.
+			if (c == 0x0a) {
+				c = 0x0d;
 			}
 			if (op == outend) {
 				break;
