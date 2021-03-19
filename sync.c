@@ -336,7 +336,9 @@ static int command_main(char *localPath, char *remotePath, int mode) {
 	for (i = 0; i < n; i++) {
 		file = &array[i];
 		p2cstr(name, file->name);
-		fprintf(stderr, "## %s: %s\n", kActionName[file->action], name);
+		if (gLogLevel >= kLogInfo) {
+			fprintf(stderr, "## %s: %s\n", kActionName[file->action], name);
+		}
 		r = sync_file(&array[i], func, srcVol, srcDir, destVol, destDir,
 		              tempVol, tempDir);
 		if (r != 0) {
