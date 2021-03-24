@@ -9,6 +9,7 @@ COptions-68K = {COptions} {Sym-68K}
 
 SrcFiles = ∂
 	convert.c ∂
+	copy.c ∂
 	file.c ∂
 	mac_from_unix.c ∂
 	mac_to_unix.c ∂
@@ -19,6 +20,7 @@ SrcFiles = ∂
 
 ObjFiles-PPC = ∂
 	convert.c.x ∂
+	copy.c.x ∂
 	file.c.x ∂
 	mac_from_unix.c.x ∂
 	mac_to_unix.c.x ∂
@@ -27,6 +29,7 @@ ObjFiles-PPC = ∂
 
 ObjFiles-68K = ∂
 	convert.c.o ∂
+	copy.c.o ∂
 	file.c.o ∂
 	mac_from_unix.c.o ∂
 	mac_to_unix.c.o ∂
@@ -91,7 +94,7 @@ Dependencies  ƒ  $OutOfDate
 		{SrcFiles}
 
 #*** Dependencies: Cut here ***
-# These dependencies were produced at 3:18:36 AM on Wed, Mar 24, 2021 by MakeDepend
+# These dependencies were produced at 4:16:36 AM on Wed, Mar 24, 2021 by MakeDepend
 
 :convert.c.x :convert.c.o	ƒ  ∂
 	:convert.c ∂
@@ -99,9 +102,14 @@ Dependencies  ƒ  $OutOfDate
 	:defs.h ∂
 	:mac_from_unix_data.h
 
+:copy.c.x :copy.c.o	ƒ  ∂
+	:copy.c ∂
+	:convert.h
+
 :file.c.x :file.c.o	ƒ  ∂
 	:file.c ∂
-	:defs.h
+	:defs.h ∂
+	:convert.h
 
 :mac_from_unix.c.x :mac_from_unix.c.o	ƒ  ∂
 	:mac_from_unix.c ∂

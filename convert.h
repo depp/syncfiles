@@ -44,3 +44,6 @@ int mac_to_unix(short srcRef, short destRef, void *srcBuf, void *destBuf);
 // Convert UTF-8 with LF line endings to Macintosh encoding with CR. The source
 // and destinations are file handles.  The buffers have size kBufferTotalSize.
 int mac_from_unix(short srcRef, short destRef, void *srcBuf, void *destBuf);
+
+// Raw data copy.
+int copy_data(short srcRef, short destRef, void *buf);

@@ -76,6 +76,13 @@ typedef enum {
 	kActionDelete,  // Delete dest file.
 } file_action;
 
+// A general type of file. Affects the type code and conversions applied.
+typedef enum {
+	kTypeUnknown,
+	kTypeText,     // Text file: convert CR/LF and encoding.
+	kTypeResource, // Resource file: copy resource fork to data fork.
+} file_type;
+
 // Information about a file present in the source or destination directory (or
 // both).
 struct file_info {
@@ -85,6 +92,8 @@ struct file_info {
 	struct file_meta meta[2];
 	// The action to apply to this file.
 	file_action action;
+	// The type of file. Used to select type codes and converters.
+	file_type type;
 };
 
 // Synchronize a file according to the action in the action field. The temporary

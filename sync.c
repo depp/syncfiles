@@ -112,16 +112,15 @@ static int dir_from_path(short *vRefNum, long *dirID, const char *dirpath) {
 	return 0;
 }
 
-// Return true if a file with the given name should be included. The name is a
-// Pascal string.
-static int filter_name(const unsigned char *name) {
+// Get the file type for a file with the given name.
+static file_type file_type_from_name(const unsigned char *name) {
 	int len, i, stem;
 	const unsigned char *ext;
 	char temp[32];
 	unsigned char c0, c1, c2;
 
 	if (EqualString(name, "\pmakefile", false, true)) {
-		return 1;
+		return kTypeText;
 	}
 	stem = 0;
 	len = name[0];
@@ -137,7 +136,7 @@ static int filter_name(const unsigned char *name) {
 			// .c .h .r
 			c0 = ext[0];
 			if (c0 == 'c' || c0 == 'h' || c0 == 'r') {
-				return 1;
+				return kTypeText;
 			}
 			break;
 		case 2:
@@ -146,7 +145,7 @@ static int filter_name(const unsigned char *name) {
 			c1 = ext[1];
 			if (c0 == 'c' && (c1 == 'c' || c1 == 'p') ||
 			    c0 == 'h' && c1 == 'h') {
-				return 1;
+				return kTypeText;
 			}
 			break;
 		case 3:
@@ -156,7 +155,13 @@ static int filter_name(const unsigned char *name) {
 			c2 = ext[2];
 			if ((c0 == 'c' || c0 == 'h') &&
 			    (c1 == 'p' && c2 == 'p' || c1 == 'x' && c2 == 'x')) {
-				return 1;
+				return kTypeText;
+			}
+			break;
+		case 4:
+			if (ext[0] == 'r' && ext[1] == 's' && ext[2] == 'r' &&
+			    ext[3] == 'c') {
+				return kTypeResource;
 			}
 			break;
 		}
@@ -165,7 +170,7 @@ static int filter_name(const unsigned char *name) {
 		p2cstr(temp, name);
 		fprintf(stderr, "## Ignored: %s\n", temp);
 	}
-	return 0;
+	return kTypeUnknown;
 }
 
 // List files in a directory, filter them, and add the files matching the filter
@@ -176,6 +181,7 @@ static int list_dir(short vRefNum, long dirID, int which) {
 	struct file_info *file;
 	OSErr err;
 	int i;
+	file_type type;
 
 	for (i = 1; i < 100; i++) {
 		memset(&ci, 0, sizeof(ci));
@@ -191,12 +197,15 @@ static int list_dir(short vRefNum, long dirID, int which) {
 			print_errcode(err, "could not list directory");
 			continue;
 		}
-		if ((ci.hFileInfo.ioFlAttrib & kioFlAttribDirMask) == 0 &&
-		    filter_name(ppath)) {
-			ppath[ppath[0] + 1] = '\0';
-			file = get_file(ppath);
-			file->meta[which].exists = true;
-			file->meta[which].modTime = ci.hFileInfo.ioFlMdDat;
+		if ((ci.hFileInfo.ioFlAttrib & kioFlAttribDirMask) == 0) {
+			type = file_type_from_name(ppath);
+			if (type != kTypeUnknown) {
+				ppath[ppath[0] + 1] = '\0';
+				file = get_file(ppath);
+				file->meta[which].exists = true;
+				file->meta[which].modTime = ci.hFileInfo.ioFlMdDat;
+				file->type = type;
+			}
 		}
 	}
 
