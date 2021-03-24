@@ -1,5 +1,6 @@
 #include "defs.h"
 
+#include <CursorCtl.h>
 #include <Files.h>
 #include <Folders.h>
 #include <MacMemory.h>
@@ -314,6 +315,7 @@ static int command_main(char *localPath, char *remotePath, int mode) {
 	}
 
 	// Synchronize the files.
+	InitCursorCtl(NULL);
 	if (mode == kModePull) {
 		r = mac_from_unix_init();
 		if (r != 0) {
@@ -339,6 +341,7 @@ static int command_main(char *localPath, char *remotePath, int mode) {
 		if (gLogLevel >= kLogInfo) {
 			fprintf(stderr, "## %s: %s\n", kActionName[file->action], name);
 		}
+		SpinCursor(32);
 		r = sync_file(&array[i], func, srcVol, srcDir, destVol, destDir,
 		              tempVol, tempDir);
 		if (r != 0) {
