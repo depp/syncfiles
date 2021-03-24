@@ -37,11 +37,6 @@ void print_errcode(OSErr err, const char *msg, ...);
 // Print an out-of-memory error.
 void print_memerr(unsigned long size);
 
-// Print an abort message.
-void print_abort_func(const char *file, int line);
-
-#define print_abort() print_abort_func(__FILE__, __LINE__)
-
 // Log the error result of a function call.
 void log_call(OSErr err, const char *function);
 
@@ -51,12 +46,16 @@ int c2pstr(unsigned char *ostr, const char *istr);
 // Convert a Pascall string (maximum 31 characters) to a C string.
 void p2cstr(char *ostr, const unsigned char *istr);
 
+// Global operation mode
+typedef enum {
+	kModeUnknown,
+	kModePush,
+	kModePull,
+} operation_mode;
+
 // =============================================================================
 // file.c
 // =============================================================================
-
-// Text file conversion function.
-typedef int (*convert_func)(short src, short dest, void *srcBuf, void *destBuf);
 
 enum {
 	kSrcDir,
@@ -90,6 +89,6 @@ struct file_info {
 
 // Synchronize a file according to the action in the action field. The temporary
 // directory must be a valid directory on the destination volume.
-int sync_file(struct file_info *file, convert_func func, short srcVol,
+int sync_file(struct file_info *file, operation_mode mode, short srcVol,
               long srcDir, short destVol, long destDir, short tempVol,
               long tempDir);

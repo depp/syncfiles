@@ -152,7 +152,7 @@ static int replace_file(FSSpec *temp, FSSpec *dest, file_action action) {
 static Ptr gSrcBuffer;
 static Ptr gDestBuffer;
 
-int sync_file(struct file_info *file, convert_func func, short srcVol,
+int sync_file(struct file_info *file, operation_mode mode, short srcVol,
               long srcDir, short destVol, long destDir, short tempVol,
               long tempDir) {
 	OSType creator = 'MPS ', fileType = 'TEXT';
@@ -241,7 +241,17 @@ int sync_file(struct file_info *file, convert_func func, short srcVol,
 	}
 
 	// Convert data.
-	r = func(srcRef, destRef, gSrcBuffer, gDestBuffer);
+	switch (mode) {
+	case kModePush:
+		r = mac_to_unix(srcRef, destRef, gSrcBuffer, gDestBuffer);
+		break;
+	case kModePull:
+		r = mac_from_unix(srcRef, destRef, gSrcBuffer, gDestBuffer);
+		break;
+	default:
+		print_err("invalid mode");
+		goto error;
+	}
 	if (r != 0) {
 		goto error;
 	}

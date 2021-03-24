@@ -1,7 +1,5 @@
 #include "defs.h"
 
-#include "convert.h"
-
 #include <CursorCtl.h>
 #include <Files.h>
 #include <Folders.h>
@@ -21,13 +19,6 @@ static const char *kActionName[] = {
 	"new",
 	"replace",
 	"delete",
-};
-
-// Global operation mode
-enum {
-	kModeUnknown,
-	kModePush,
-	kModePull,
 };
 
 // Array of metadata entries for files.
@@ -212,7 +203,8 @@ static int list_dir(short vRefNum, long dirID, int which) {
 	return 0;
 }
 
-static int command_main(char *localPath, char *remotePath, int mode) {
+static int command_main(char *localPath, char *remotePath,
+                        operation_mode mode) {
 	short localVol, remoteVol, srcVol, destVol, tempVol;
 	long localDir, remoteDir, srcDir, destDir, tempDir;
 	struct file_info *array, *file;
@@ -220,7 +212,6 @@ static int command_main(char *localPath, char *remotePath, int mode) {
 	int r, i, n;
 	char name[32];
 	bool hasAction;
-	convert_func func;
 
 	// Get handles to local and remote directories.
 	if (localPath == NULL) {
@@ -319,7 +310,6 @@ static int command_main(char *localPath, char *remotePath, int mode) {
 	// Synchronize the files.
 	InitCursorCtl(NULL);
 	if (mode == kModePull) {
-		func = mac_from_unix;
 		err =
 			FindFolder(destVol, kTemporaryFolderType, true, &tempVol, &tempDir);
 		if (err != 0) {
@@ -327,7 +317,6 @@ static int command_main(char *localPath, char *remotePath, int mode) {
 			return 1;
 		}
 	} else {
-		func = mac_to_unix;
 		// When pushing, we use the destination directory as the temporary
 		// folder, to avoid crossing filesystem boundaries on the host.
 		tempVol = destVol;
@@ -340,7 +329,7 @@ static int command_main(char *localPath, char *remotePath, int mode) {
 			fprintf(stderr, "## %s: %s\n", kActionName[file->action], name);
 		}
 		SpinCursor(32);
-		r = sync_file(&array[i], func, srcVol, srcDir, destVol, destDir,
+		r = sync_file(&array[i], mode, srcVol, srcDir, destVol, destDir,
 		              tempVol, tempDir);
 		if (r != 0) {
 			print_err("failed to synchronize file: %s", name);
