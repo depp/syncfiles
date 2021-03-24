@@ -86,6 +86,10 @@ void print_memerr(unsigned long size) {
 	print_errcode(err, "out of memory; size=%lu", size);
 }
 
+void print_abort_func(const char *file, int line) {
+	print_err("assertion failed: %s:d", file, line);
+}
+
 void log_call(OSErr err, const char *function) {
 	const char *emsg;
 

@@ -1,6 +1,4 @@
-#include "defs.h"
-
-#include <stdio.h>
+#include "convert.h"
 
 // Table that converts Macintosh Roman characters to UTF-8, and CR to LF.
 static const unsigned short kToUnixTable[256] = {
@@ -28,39 +26,83 @@ static const unsigned short kToUnixTable[256] = {
 	184,   733, 731,  711,
 };
 
-int mac_to_unix(unsigned char **outptr, unsigned char *outend,
-                const unsigned char **inptr, const unsigned char *inend) {
-	unsigned char *op = *outptr;
-	const unsigned char *ip = *inptr;
-	unsigned cp;
+int mac_to_unix(short srcRef, short destRef, void *srcBuf, void *destBuf) {
+	unsigned char *op, *oe, *tmp; // Output ptr, end.
+	const unsigned char *ip, *ie; // Input ptr, end.
+	unsigned cp;                  // Code point.
+	int r;
+	long count;
+	int has_eof = 0;
 
-	while (ip < inend) {
-		cp = kToUnixTable[*ip];
-		if (cp < 0x80) {
-			if (outend - op < 1) {
+	// Initialize buffer pointers.
+	ip = srcBuf;
+	ie = ip;
+	op = destBuf;
+	oe = op + kBufferBaseSize;
+
+	for (;;) {
+		// If input buffer is consumed, read more.
+		if (ip >= ie) {
+			if (has_eof) {
 				break;
 			}
-			op[0] = cp;
-			op += 1;
-		} else if (cp < 0x400) {
-			if (outend - op < 2) {
-				break;
+			count = kBufferBaseSize;
+			r = convert_read(srcRef, &count, srcBuf);
+			if (r != kConvertOK) {
+				if (r == kConvertEOF) {
+					has_eof = 1;
+					if (count == 0) {
+						break;
+					}
+				} else {
+					return 1;
+				}
 			}
-			op[0] = (cp >> 6) | 0xc0;
-			op[1] = (cp & 0x3f) | 0x80;
-			op += 2;
-		} else {
-			if (outend - op < 3) {
-				break;
-			}
-			op[0] = (cp >> 12) | 0xe0;
-			op[1] = ((cp >> 6) & 0x3f) | 0x80;
-			op[2] = (cp & 0x3f) | 0x80;
-			op += 3;
+			ip = srcBuf;
+			ie = ip + count;
 		}
-		ip++;
+
+		// If output buffer has a full chunk, write it out.
+		if (op >= oe) {
+			count = kBufferBaseSize;
+			r = convert_write(destRef, count, destBuf);
+			if (r != 0) {
+				return 1;
+			}
+			tmp = destBuf;
+			tmp[0] = tmp[kBufferBaseSize];
+			tmp[1] = tmp[kBufferBaseSize + 1];
+			op -= kBufferBaseSize;
+		}
+
+		// Convert as much as possible. Note that the "extra" past the end of
+		// the destination buffer may be used, just to simplify bounds checking.
+		while (ip < ie && op < oe) {
+			cp = kToUnixTable[*ip++];
+			if (cp < 0x80) {
+				op[0] = cp;
+				op += 1;
+			} else if (cp < 0x400) {
+				op[0] = (cp >> 6) | 0xc0;
+				op[1] = (cp & 0x3f) | 0x80;
+				op += 2;
+			} else {
+				op[0] = (cp >> 12) | 0xe0;
+				op[1] = ((cp >> 6) & 0x3f) | 0x80;
+				op[2] = (cp & 0x3f) | 0x80;
+				op += 3;
+			}
+		}
 	}
-	*outptr = op;
-	*inptr = ip;
+
+	// Write remainder of output buffer.
+	if (op != destBuf) {
+		count = op - (unsigned char *)destBuf;
+		r = convert_write(destRef, count, destBuf);
+		if (r != 0) {
+			return 1;
+		}
+	}
+
 	return 0;
 }

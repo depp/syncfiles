@@ -14,10 +14,6 @@ SyncFiles is a tool for MPW (Macintosh Programmer’s Workshop) which synchroniz
 
 - Creates Macintosh files with MPW Shell creator code and text file type.
 
-## Limitations
-
-There is a hard-coded maximum file size of 64 KiB.
-
 ## File Patterns
 
 Copies files named Makefile, and files with the following extensions:
@@ -57,6 +53,10 @@ SyncFiles <DestPath> -pull
 - `-dir`: Specify an alternat Macintosh directory to push from or pull to. By default, pushes from and pulls to the current directory.
 
 - `-delete`: Delete files in destination which are missing from source.
+
+## Testing
+
+Run `sh test.sh` to test the text conversion code.
 
 ## License
 

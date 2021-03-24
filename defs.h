@@ -37,6 +37,11 @@ void print_errcode(OSErr err, const char *msg, ...);
 // Print an out-of-memory error.
 void print_memerr(unsigned long size);
 
+// Print an abort message.
+void print_abort_func(const char *file, int line);
+
+#define print_abort() print_abort_func(__FILE__, __LINE__)
+
 // Log the error result of a function call.
 void log_call(OSErr err, const char *function);
 
@@ -51,9 +56,7 @@ void p2cstr(char *ostr, const unsigned char *istr);
 // =============================================================================
 
 // Text file conversion function.
-typedef int (*convert_func)(unsigned char **outptr, unsigned char *outend,
-                            const unsigned char **inptr,
-                            const unsigned char *inend);
+typedef int (*convert_func)(short src, short dest, void *srcBuf, void *destBuf);
 
 enum {
 	kSrcDir,
@@ -90,17 +93,3 @@ struct file_info {
 int sync_file(struct file_info *file, convert_func func, short srcVol,
               long srcDir, short destVol, long destDir, short tempVol,
               long tempDir);
-
-// =============================================================================
-// conversion
-// =============================================================================
-
-// mac_to_unix.c
-int mac_to_unix(unsigned char **outptr, unsigned char *outend,
-                const unsigned char **inptr, const unsigned char *inend);
-
-// mac_from_unix.c
-int mac_from_unix(unsigned char **outptr, unsigned char *outend,
-                  const unsigned char **inptr, const unsigned char *inend);
-int mac_from_unix_init(void);
-void mac_from_unix_term(void);

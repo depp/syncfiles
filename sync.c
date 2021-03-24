@@ -1,5 +1,7 @@
 #include "defs.h"
 
+#include "convert.h"
+
 #include <CursorCtl.h>
 #include <Files.h>
 #include <Folders.h>
@@ -317,10 +319,6 @@ static int command_main(char *localPath, char *remotePath, int mode) {
 	// Synchronize the files.
 	InitCursorCtl(NULL);
 	if (mode == kModePull) {
-		r = mac_from_unix_init();
-		if (r != 0) {
-			return 1;
-		}
 		func = mac_from_unix;
 		err =
 			FindFolder(destVol, kTemporaryFolderType, true, &tempVol, &tempDir);
@@ -405,7 +403,6 @@ int main(int argc, char **argv) {
 	if (gFiles != NULL) {
 		DisposeHandle(gFiles);
 	}
-	mac_from_unix_term();
 	if (gLogLevel >= kLogVerbose) {
 		fputs("## Done\n", stderr);
 	}
