@@ -155,7 +155,7 @@ static Ptr gDestBuffer;
 int sync_file(struct file_info *file, operation_mode mode, short srcVol,
               long srcDir, short destVol, long destDir, short tempVol,
               long tempDir) {
-	OSType creator = 'MPS ', fileType = 'TEXT';
+	OSType creator, fileType;
 	FSSpec src, dest, temp;
 	short srcRef = 0, destRef = 0;
 	bool has_temp = false;
@@ -196,14 +196,20 @@ int sync_file(struct file_info *file, operation_mode mode, short srcVol,
 		return 1;
 	}
 
-	// Open the source file for reading.
-	err = FSpOpenDF(&src, fsRdPerm, &srcRef);
-	if (err != 0) {
-		print_errcode(err, "could not open file");
-		goto error;
+	// Create the temporary file.
+	switch (file->type) {
+	case kTypeText:
+		creator = 'MPS ';
+		fileType = 'TEXT';
+		break;
+	case kTypeResource:
+		creator = 'RSED';
+		fileType = 'rsrc';
+		break;
+	default:
+		print_err("invalid type");
+		return 1;
 	}
-
-	// Create and open the temporary file for writing.
 	err = FSpCreate(&temp, creator, fileType, smSystemScript);
 	if (err == dupFNErr) {
 		err = FSpDelete(&temp);
@@ -218,11 +224,6 @@ int sync_file(struct file_info *file, operation_mode mode, short srcVol,
 		goto error;
 	}
 	has_temp = true;
-	err = FSpOpenDF(&temp, fsRdWrPerm, &destRef);
-	if (err != 0) {
-		print_errcode(err, "could not open temp file");
-		goto error;
-	}
 
 	// Get buffers for conversion.
 	if (gSrcBuffer == NULL) {
@@ -240,16 +241,40 @@ int sync_file(struct file_info *file, operation_mode mode, short srcVol,
 		}
 	}
 
+	// Open the source file for reading.
+	if (file->type == kTypeResource && mode == kModePush) {
+		err = FSpOpenRF(&src, fsRdPerm, &srcRef);
+	} else {
+		err = FSpOpenDF(&src, fsRdPerm, &srcRef);
+	}
+	if (err != 0) {
+		print_errcode(err, "could not open file");
+		goto error;
+	}
+	if (file->type == kTypeResource && mode == kModePull) {
+		err = FSpOpenRF(&temp, fsRdWrPerm, &destRef);
+	} else {
+		err = FSpOpenDF(&temp, fsRdWrPerm, &destRef);
+	}
+	if (err != 0) {
+		print_errcode(err, "could not open temp file");
+		goto error;
+	}
+
 	// Convert data.
-	switch (mode) {
-	case kModePush:
-		r = mac_to_unix(srcRef, destRef, gSrcBuffer, gDestBuffer);
+	switch (file->type) {
+	case kTypeText:
+		if (mode == kModePush) {
+			r = mac_to_unix(srcRef, destRef, gSrcBuffer, gDestBuffer);
+		} else {
+			r = mac_from_unix(srcRef, destRef, gSrcBuffer, gDestBuffer);
+		}
 		break;
-	case kModePull:
-		r = mac_from_unix(srcRef, destRef, gSrcBuffer, gDestBuffer);
+	case kTypeResource:
+		r = copy_data(srcRef, destRef, gSrcBuffer);
 		break;
 	default:
-		print_err("invalid mode");
+		print_err("invalid type");
 		goto error;
 	}
 	if (r != 0) {
