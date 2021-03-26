@@ -112,16 +112,51 @@ static int dir_from_path(short *vRefNum, long *dirID, const char *dirpath) {
 	return 0;
 }
 
+struct extension_info {
+	unsigned long extension;
+	file_type type;
+};
+
+static const struct extension_info kExtensions1[] = {
+	{'c', kTypeText},
+	{'h', kTypeText},
+	{'r', kTypeText},
+};
+
+static const struct extension_info kExtensions2[] = {
+	{'cc', kTypeText},
+	{'cp', kTypeText},
+	{'hh', kTypeText},
+};
+
+static const struct extension_info kExtensions3[] = {
+	{'cpp', kTypeText},
+	{'cxx', kTypeText},
+	{'hpp', kTypeText},
+	{'hxx', kTypeText},
+};
+
+static const struct extension_info kExtensions4[] = {
+	{'rsrc', kTypeResource},
+};
+
+static file_type file_type_from_extension(unsigned long extension,
+                                          const struct extension_info *info,
+                                          int info_count) {
+	int i;
+	for (i = 0; i < info_count; i++) {
+		if (extension == info[i].extension) {
+			return info[i].type;
+		}
+	}
+	return kTypeUnknown;
+}
+
 // Get the file type for a file with the given name.
 static file_type file_type_from_name(const unsigned char *name) {
 	int len, i, stem;
 	const unsigned char *ext;
-	char temp[32];
-	unsigned char c0, c1, c2;
 
-	if (EqualString(name, "\pmakefile", false, true)) {
-		return kTypeText;
-	}
 	stem = 0;
 	len = name[0];
 	for (i = 1; i <= len; i++) {
@@ -129,46 +164,28 @@ static file_type file_type_from_name(const unsigned char *name) {
 			stem = i;
 		}
 	}
-	if (stem != 0) {
-		ext = name + stem + 1;
-		switch (len - stem) {
-		case 1:
-			// .c .h .r
-			c0 = ext[0];
-			if (c0 == 'c' || c0 == 'h' || c0 == 'r') {
-				return kTypeText;
-			}
-			break;
-		case 2:
-			// .cc .cp .hh
-			c0 = ext[0];
-			c1 = ext[1];
-			if (c0 == 'c' && (c1 == 'c' || c1 == 'p') ||
-			    c0 == 'h' && c1 == 'h') {
-				return kTypeText;
-			}
-			break;
-		case 3:
-			// .cpp .hpp .cxx .hxx
-			c0 = ext[0];
-			c1 = ext[1];
-			c2 = ext[2];
-			if ((c0 == 'c' || c0 == 'h') &&
-			    (c1 == 'p' && c2 == 'p' || c1 == 'x' && c2 == 'x')) {
-				return kTypeText;
-			}
-			break;
-		case 4:
-			if (ext[0] == 'r' && ext[1] == 's' && ext[2] == 'r' &&
-			    ext[3] == 'c') {
-				return kTypeResource;
-			}
-			break;
+	if (stem == 0) {
+		if (EqualString(name, "\pmakefile", false, true)) {
+			return kTypeText;
 		}
 	}
-	if (gLogLevel >= kLogVerbose) {
-		p2cstr(temp, name);
-		fprintf(stderr, "## Ignored: %s\n", temp);
+	ext = name + stem + 1;
+	switch (len - stem) {
+	case 1:
+		return file_type_from_extension(ext[0], kExtensions1,
+		                                ARRAY_COUNT(kExtensions1));
+	case 2:
+		return file_type_from_extension((ext[0] << 8) | ext[1], kExtensions2,
+		                                ARRAY_COUNT(kExtensions2));
+	case 3:
+		return file_type_from_extension(
+			((unsigned long)ext[0] << 16) | (ext[1] << 8) | ext[2],
+			kExtensions3, ARRAY_COUNT(kExtensions3));
+	case 4:
+		return file_type_from_extension(
+			((unsigned long)ext[0] << 24) | ((unsigned long)ext[1] << 16) |
+				(ext[2] << 8) | ext[3],
+			kExtensions4, ARRAY_COUNT(kExtensions4));
 	}
 	return kTypeUnknown;
 }
