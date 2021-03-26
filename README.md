@@ -10,7 +10,7 @@ SyncFiles is a tool for MPW (Macintosh Programmer’s Workshop) which synchroniz
 
 - Only synchronizes files which match hard-coded patterns.
 
-- Converts text files to UTF-8 and LF line endings for Unix systems; converts to Mac OS Roman and CR line endings for Macintosh systems.
+- Converts text files to UTF-8 and LF line endings for Unix systems; converts to Mac OS Roman and CR line endings for Macintosh systems. XML files are not re-encoded.
 
 - For resource files, converts by copying the Macintosh resource fork to the data fork.
 
@@ -24,7 +24,11 @@ Copies files named Makefile, and files with the following extensions:
 
 - C++: `.cc` `.cp` `.cpp` `.cxx` `.hh` `.hpp` `.hxx`
 
+- Plain text: `.txt`
+
 - Resource: `.rsrc`
+
+- XML: `.xml` (CR-LF conversion only, no encoding conversion)
 
 ## Usage
 

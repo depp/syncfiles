@@ -117,6 +117,7 @@ struct extension_info {
 	file_type type;
 };
 
+// clang-format off
 static const struct extension_info kExtensions1[] = {
 	{'c', kTypeText},
 	{'h', kTypeText},
@@ -134,11 +135,14 @@ static const struct extension_info kExtensions3[] = {
 	{'cxx', kTypeText},
 	{'hpp', kTypeText},
 	{'hxx', kTypeText},
+	{'txt', kTypeText},
+	{'xml', kTypeTextUTF8},
 };
 
 static const struct extension_info kExtensions4[] = {
 	{'rsrc', kTypeResource},
 };
+// clang-format on
 
 static file_type file_type_from_extension(unsigned long extension,
                                           const struct extension_info *info,

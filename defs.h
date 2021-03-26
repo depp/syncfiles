@@ -82,6 +82,7 @@ typedef enum {
 typedef enum {
 	kTypeUnknown,
 	kTypeText,     // Text file: convert CR/LF and encoding.
+	kTypeTextUTF8, // Text file: convert CR/LF only.
 	kTypeResource, // Resource file: copy resource fork to data fork.
 } file_type;
 

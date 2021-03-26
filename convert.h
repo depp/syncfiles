@@ -47,3 +47,7 @@ int mac_from_unix(short srcRef, short destRef, void *srcBuf, void *destBuf);
 
 // Raw data copy.
 int copy_data(short srcRef, short destRef, void *buf);
+
+// Convert line endings but don't change encoding.
+int convert_line_endings(short srcRef, short destRef, void *buf,
+                         unsigned char srcEnding, unsigned char destEnding);

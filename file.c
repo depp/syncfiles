@@ -199,6 +199,7 @@ int sync_file(struct file_info *file, operation_mode mode, short srcVol,
 	// Create the temporary file.
 	switch (file->type) {
 	case kTypeText:
+	case kTypeTextUTF8:
 		creator = 'MPS ';
 		fileType = 'TEXT';
 		break;
@@ -270,6 +271,18 @@ int sync_file(struct file_info *file, operation_mode mode, short srcVol,
 			r = mac_from_unix(srcRef, destRef, gSrcBuffer, gDestBuffer);
 		}
 		break;
+	case kTypeTextUTF8: {
+		unsigned char srcEnding, destEnding;
+		if (mode == kModePush) {
+			srcEnding = 0x0d;
+			destEnding = 0x0a;
+		} else {
+			srcEnding = 0x0a;
+			destEnding = 0x0d;
+		}
+		r = convert_line_endings(srcRef, destRef, gSrcBuffer, srcEnding,
+		                         destEnding);
+	} break;
 	case kTypeResource:
 		r = copy_data(srcRef, destRef, gSrcBuffer);
 		break;

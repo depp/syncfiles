@@ -9,6 +9,7 @@ COptions-68K = {COptions} {Sym-68K}
 
 SrcFiles = ∂
 	convert.c ∂
+	convert_line_endings.c ∂
 	copy.c ∂
 	file.c ∂
 	mac_from_unix.c ∂
@@ -20,6 +21,7 @@ SrcFiles = ∂
 
 ObjFiles-PPC = ∂
 	convert.c.x ∂
+	convert_line_endings.c.x ∂
 	copy.c.x ∂
 	file.c.x ∂
 	mac_from_unix.c.x ∂
@@ -29,6 +31,7 @@ ObjFiles-PPC = ∂
 
 ObjFiles-68K = ∂
 	convert.c.o ∂
+	convert_line_endings.c.o ∂
 	copy.c.o ∂
 	file.c.o ∂
 	mac_from_unix.c.o ∂
@@ -94,13 +97,17 @@ Dependencies  ƒ  $OutOfDate
 		{SrcFiles}
 
 #*** Dependencies: Cut here ***
-# These dependencies were produced at 4:16:36 AM on Wed, Mar 24, 2021 by MakeDepend
+# These dependencies were produced at 3:40:21 AM on Fri, Mar 26, 2021 by MakeDepend
 
 :convert.c.x :convert.c.o	ƒ  ∂
 	:convert.c ∂
 	:convert.h ∂
 	:defs.h ∂
 	:mac_from_unix_data.h
+
+:convert_line_endings.c.x :convert_line_endings.c.o	ƒ  ∂
+	:convert_line_endings.c ∂
+	:convert.h
 
 :copy.c.x :copy.c.o	ƒ  ∂
 	:copy.c ∂
