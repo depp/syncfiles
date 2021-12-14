@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/depp/packbits"
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -150,45 +151,6 @@ func tableToBytes(t []uint16) []byte {
 	return b
 }
 
-func getRun(bytes []byte) (repeat bool, run []byte) {
-	if len(bytes) == 0 {
-		return
-	}
-	ref := bytes[0]
-	n := 1
-	for n < len(bytes) && bytes[n] == ref {
-		n++
-	}
-	if n >= 2 {
-		return true, bytes[:n]
-	}
-	for i, b := range bytes[1:] {
-		if b == ref {
-			return false, bytes[:i]
-		}
-		ref = b
-	}
-	return false, bytes
-}
-
-func packBits(bytes []byte) []byte {
-	var result []byte
-	for len(bytes) > 0 {
-		repeat, run := getRun(bytes)
-		if len(run) > 128 {
-			run = run[:128]
-		}
-		if repeat {
-			result = append(result, byte(1-len(run)), run[0])
-		} else {
-			result = append(result, byte(len(run)-1))
-			result = append(result, run...)
-		}
-		bytes = bytes[len(run):]
-	}
-	return result
-}
-
 func printTable(table []uint16) error {
 	if _, err := fmt.Print("static const unsigned short kFromUnixTable[] = {"); err != nil {
 		return err
@@ -249,8 +211,7 @@ func main() {
 		dumpTransitions(table)
 	}
 	bytes := tableToBytes(table)
-	// printTable(table)
-	bits := packBits(bytes)
+	bits := packbits.Pack(bytes)
 	if err := printData(os.Stdout, len(bytes), bits); err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
