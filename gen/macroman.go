@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"os"
@@ -20,7 +21,7 @@ func init() {
 	flag.BoolVar(&flagDumpTransitions, "dump-transitions", false, "dump state machine state transition tables")
 }
 
-var characters [256]uint16
+var characters [256]rune
 
 func init() {
 	hichars := [128]uint16{
@@ -42,131 +43,42 @@ func init() {
 		0x00AF, 0x02D8, 0x02D9, 0x02DA, 0x00B8, 0x02DD, 0x02DB, 0x02C7,
 	}
 	for i := 0; i < 128; i++ {
-		characters[i] = uint16(i)
+		characters[i] = rune(i)
 	}
 	for i, c := range hichars {
-		characters[i+128] = c
+		characters[i+128] = rune(c)
 	}
-	characters['\n'] = '\r'
 }
 
-type state struct {
-	chars  [256]uint8
-	states [256]*state
-}
+var (
+	// lineBreaks is the set of all sequences recognized as line breaks.
+	lineBreaks = [][]byte{{'\n'}, {'\r'}, {'\r', '\n'}}
+	// normForms is the set of Unicode normalization forms recognized.
+	normForms = []norm.Form{norm.NFC, norm.NFD}
+)
 
-func genStates() *state {
-	root := new(state)
-	// Iterate over each Unicode normalization form.
-	// Omit norm.NFKC, norm.NFKD
-	for _, form := range []norm.Form{norm.NFC, norm.NFD} {
-		// Iterate over Macintosh, Unicode characters.
-		for m, u := range characters {
-			st := root
-			bytes := []byte(form.String(string(rune(u))))
-			for _, b := range bytes[:len(bytes)-1] {
-				ost := st
-				st = st.states[b]
-				if st == nil {
-					st = new(state)
-					ost.states[b] = st
-				}
-			}
-			b := bytes[len(bytes)-1]
-			if st.chars[b] == 0 {
-				st.chars[b] = uint8(m)
-				if flagDumpSequences {
-					fmt.Fprintf(os.Stderr, "%02x: %x\n", m, bytes)
-				}
+func makeConverter(cmap *[256]rune) (*node, error) {
+	var n node
+	// Special case for CR and LF.
+	for _, b := range lineBreaks {
+		if err := n.add('\r', b); err != nil {
+			return nil, err
+		}
+	}
+	for m, u := range *cmap {
+		if m == '\r' || m == '\n' {
+			continue
+		}
+		us := string(u)
+		for _, form := range normForms {
+			bytes := []byte(form.String(us))
+			fmt.Fprintf(os.Stderr, "%d -> %v\n", u, bytes)
+			if err := n.add(byte(m), bytes); err != nil {
+				return nil, err
 			}
 		}
 	}
-	return root
-}
-
-func (s *state) count() int {
-	n := 1
-	for _, s := range s.states {
-		if s != nil {
-			n += s.count()
-		}
-	}
-	return n
-}
-
-func (s *state) writeTable(table []uint16, pos int) int {
-	data := table[pos*256 : pos*256+256 : pos*256+256]
-	pos++
-	for i, c := range s.chars {
-		data[i] = uint16(c)
-	}
-	for i, c := range s.states {
-		if c != nil {
-			data[i] |= uint16(pos << 8)
-			pos = c.writeTable(table, pos)
-		}
-	}
-	return pos
-}
-
-func (s *state) genTable() []uint16 {
-	n := s.count()
-	table := make([]uint16, 256*n)
-	pos := s.writeTable(table, 0)
-	if pos != n {
-		panic("bad table")
-	}
-	return table
-}
-
-func dumpTransitions(table []uint16) {
-	n := len(table) >> 8
-	for i := 0; i < n; i++ {
-		t := table[i<<8 : (i+1)<<8]
-		fmt.Fprintf(os.Stderr, "State $%02x\n", i)
-		for m, v := range t {
-			if v != 0 {
-				fmt.Fprintf(os.Stderr, "    $%02x ->", m)
-				st := v >> 8
-				chr := v & 255
-				if st != 0 {
-					fmt.Fprintf(os.Stderr, " state $%02x", st)
-				}
-				if chr != 0 {
-					fmt.Fprintf(os.Stderr, " char $%02x", chr)
-				}
-				fmt.Fprintln(os.Stderr)
-			}
-		}
-		fmt.Fprintln(os.Stderr)
-	}
-}
-
-func tableToBytes(t []uint16) []byte {
-	b := make([]byte, len(t)*2)
-	for i, x := range t {
-		b[i*2] = byte(x >> 8)
-		b[i*2+1] = byte(x)
-	}
-	return b
-}
-
-func printTable(table []uint16) error {
-	if _, err := fmt.Print("static const unsigned short kFromUnixTable[] = {"); err != nil {
-		return err
-	}
-	for i, n := range table {
-		if i&15 == 0 {
-			if _, err := fmt.Println(); err != nil {
-				return err
-			}
-		}
-		if _, err := fmt.Printf("%d,", n); err != nil {
-			return err
-		}
-	}
-	_, err := fmt.Print("\n};\n")
-	return err
+	return &n, nil
 }
 
 func printData(f *os.File, ulen int, data []byte) error {
@@ -202,17 +114,25 @@ func printData(f *os.File, ulen int, data []byte) error {
 	return err
 }
 
+func mainE() error {
+	n, err := makeConverter(&characters)
+	if err != nil {
+		return err
+	}
+	table := n.genTable()
+	if flagDumpTransitions {
+		w := bufio.NewWriter(os.Stderr)
+		table.dumpTransitions(w)
+		w.Flush()
+	}
+	bytes := table.toBytes()
+	bits := packbits.Pack(bytes)
+	return printData(os.Stdout, len(bytes), bits)
+}
+
 func main() {
 	flag.Parse()
-
-	root := genStates()
-	table := root.genTable()
-	if flagDumpTransitions {
-		dumpTransitions(table)
-	}
-	bytes := tableToBytes(table)
-	bits := packbits.Pack(bytes)
-	if err := printData(os.Stdout, len(bytes), bits); err != nil {
+	if err := mainE(); err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
 	}
