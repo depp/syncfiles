@@ -43,6 +43,9 @@ func mainE() error {
 	if err := writeMap(&d, m, "src/getcharmap.c"); err != nil {
 		return err
 	}
+	if err := writeRez(&d, "src/charmaps.r"); err != nil {
+		return err
+	}
 	return nil
 }
 
