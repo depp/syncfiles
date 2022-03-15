@@ -1,11 +1,7 @@
-# Character Conversion Tables
+# Character Conversion Data Generator
 
 Used by SyncFiles.
 
-This program generates the tables necessary to convert from UTF-8 to Mac OS Roman.
+This program generates the tables necessary to convert between UTF-8 and various historical Mac OS character sets. Not all character sets are currently supported.
 
-The conversion process is entirely table-driven. The table maps a (state, input) pair to a (state, output) pair. The initial state is 0. A transition to state 0 is considered invalid.
-
-A transition may have _both_ a state and output. This means that the input may be translated in different ways depending on the bytes that follow. The translation code prefers the longest path through the state table that results in an output.
-
-The table is compressed with PackBits to reduce its size by a factor of 22x.
+Right now, the table format is not quite finalized, so the output is not checked in to version control. This means that you have to run this program in order to generate the data and compile SyncFiles. It is planned to check the data files in, making this step unnecessary.
