@@ -1,0 +1,24 @@
+Name,File,Script,Regions
+Roman,ROMAN.TXT,smRoman,
+Turkish,TURKISH.TXT,smRoman,verTurkey
+Croatian,CROATIAN.TXT,smRoman,verCroatia;verSlovenian;verYugoCroatian
+Icelandic,ICELAND.TXT,smRoman,verIceland;verFaroeIsl
+Romanian,ROMANIAN.TXT,smRoman,verRomania
+Celtic,CELTIC.TXT,smRoman,verIreland;verScottishGaelic;verManxGaelic;verBreton;verWelsh
+Gaelic,GAELIC.TXT,smRoman,verIrishGaelicScript
+Greek,GREEK.TXT,smRoman,verGreece
+Japanese,JAPANESE.TXT,smJapanese,
+Chinese (Traditional),CHINTRAD.TXT,smTradChinese,
+Korean,KOREAN.TXT,smKorean,
+Arabic,ARABIC.TXT,smArabic,
+Farsi,FARSI.TXT,smArabic,verIran
+Hebrew,HEBREW.TXT,smHebrew,
+Cyrillic,CYRILLIC.TXT,smCyrillic,
+Devanagari,DEVANAGA.TXT,smDevanagari,
+Gurmukhi,GURMUKHI.TXT,smGurmukhi,
+Gujarati,GUJARATI.TXT,smGujarati,
+Thai,,smThai,
+Chinese (Simplified),CHINSIMP.TXT,smSimpChinese,
+Tibetan,,smTibetan,
+Inuit,INUIT.TXT,smEthiopic,verNunavut
+Central European,CENTEURO.TXT,smCentralEuroRoman,

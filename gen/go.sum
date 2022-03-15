@@ -1,5 +1,3 @@
-github.com/depp/packbits v1.0.0 h1:KqnhCkzI5WbWuwKsAgPI/JLF11mBXBEvYADiwKZMXi0=
-github.com/depp/packbits v1.0.0/go.mod h1:wDV3NXiMB4a+KztSJ93UMH9cBKj5cEGooAbgRXTpQ78=
 golang.org/x/text v0.3.5 h1:i6eZZ+zk0SOf0xgBpEpPD18qWcJda6q1sxt3S0kzyUQ=
 golang.org/x/text v0.3.5/go.mod h1:5Zoc/QRtKVWzQhOtBMvqHzDpF6irO9z98xDceosuGiQ=
 golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=

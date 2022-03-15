@@ -1,8 +1,5 @@
-module moria.us/macroman
+module moria.us/macscript
 
 go 1.16
 
-require (
-	github.com/depp/packbits v1.0.0
-	golang.org/x/text v0.3.5
-)
+require golang.org/x/text v0.3.5
