@@ -51,7 +51,9 @@ func writeRez(d *scriptdata, charmaps []string, filename string) error {
 	w := bufio.NewWriter(fp)
 
 	w.WriteString(header)
-	w.WriteString("#include \"resources.h\"\n")
+	w.WriteString(
+		"#include \"resources.h\"\n" +
+			"#include \"MacTypes.r\"\n")
 	writeStrings(w, `rSTRS_Charmaps, "Character Maps"`, charmapNames(d))
 	writeStrings(w, `rSTRS_Scripts, "Scripts"`, constStrings(&d.scripts))
 	writeStrings(w, `rSTRS_Regions, "Regions"`, constStrings(&d.regions))
