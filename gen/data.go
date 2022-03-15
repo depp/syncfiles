@@ -114,8 +114,8 @@ func readConsts(filename string) (m constmap, err error) {
 type charmapinfo struct {
 	name    string
 	file    string
-	script  string
-	regions []string
+	script  int
+	regions []int
 }
 
 // readCharmaps reads and parses the charmaps.csv file.
@@ -131,6 +131,12 @@ func readCharmaps(filename string, scripts, regions map[string]int) ([]charmapin
 		return nil, err
 	}
 	var arr []charmapinfo
+	gcharmaps := make(map[int]int)
+	type key struct {
+		script int
+		region int
+	}
+	rcharmaps := make(map[key]int)
 	for {
 		row, err := r.Read()
 		if err != nil {
@@ -143,22 +149,41 @@ func readCharmaps(filename string, scripts, regions map[string]int) ([]charmapin
 			line, _ := r.FieldPos(0)
 			return nil, &dataError{filename, line, 0, errors.New("expected at least three columns")}
 		}
+		index := len(arr)
 		ifo := charmapinfo{
-			name:   row[0],
-			file:   row[1],
-			script: row[2],
+			name: row[0],
+			file: row[1],
 		}
-		if _, e := scripts[ifo.script]; !e {
+		sname := row[2]
+		var e bool
+		ifo.script, e = scripts[sname]
+		if !e {
 			line, col := r.FieldPos(2)
-			return nil, &dataError{filename, line, col, fmt.Errorf("unknown script: %q", ifo.script)}
+			return nil, &dataError{filename, line, col, fmt.Errorf("unknown script: %q", sname)}
 		}
 		if len(row) >= 4 && row[3] != "" {
-			ifo.regions = strings.Split(row[3], ";")
-			for _, region := range ifo.regions {
-				if _, e := regions[region]; !e {
+			sregions := strings.Split(row[3], ";")
+			ifo.regions = make([]int, 0, len(sregions))
+			for _, s := range sregions {
+				rg, e := regions[s]
+				if !e {
 					line, col := r.FieldPos(3)
-					return nil, &dataError{filename, line, col, fmt.Errorf("unknown region: %q", region)}
+					return nil, &dataError{filename, line, col, fmt.Errorf("unknown region: %q", s)}
 				}
+				k := key{ifo.script, rg}
+				switch omap, e := rcharmaps[k]; {
+				case !e:
+					rcharmaps[k] = index
+					ifo.regions = append(ifo.regions, rg)
+				case omap != index:
+					line, _ := r.FieldPos(0)
+					return nil, &dataError{filename, line, 0, fmt.Errorf("charmap conflicts with previou charmaps: %q", arr[omap].name)}
+				}
+			}
+		} else {
+			if omap, e := gcharmaps[ifo.script]; e {
+				line, _ := r.FieldPos(0)
+				return nil, &dataError{filename, line, 0, fmt.Errorf("charmap conflicts with previou charmaps: %q", arr[omap].name)}
 			}
 		}
 		arr = append(arr, ifo)
