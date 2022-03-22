@@ -42,7 +42,9 @@ func constStrings(c *constmap) []string {
 }
 
 func writeRez(d *scriptdata, charmaps []string, filename string) error {
-	fmt.Fprintln(os.Stderr, "Writing:", filename)
+	if !flagQuiet {
+		fmt.Fprintln(os.Stderr, "Writing:", filename)
+	}
 	fp, err := os.Create(filename)
 	if err != nil {
 		return err

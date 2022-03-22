@@ -73,7 +73,9 @@ func genMap(d *scriptdata) []*scriptmap {
 // writeMap writes out a C function that returns the correct character map for a
 // given script and region.
 func writeMap(d *scriptdata, m []*scriptmap, filename string) error {
-	fmt.Fprintln(os.Stderr, "Writing:", filename)
+	if !flagQuiet {
+		fmt.Fprintln(os.Stderr, "Writing:", filename)
+	}
 
 	fp, err := os.Create(filename)
 	if err != nil {
@@ -84,7 +86,8 @@ func writeMap(d *scriptdata, m []*scriptmap, filename string) error {
 
 	w.WriteString(header)
 	w.WriteString(
-		"int GetCharmap(int script, int region) {\n" +
+		"#include \"convert.h\"\n" +
+			"int GetCharmap(int script, int region) {\n" +
 			"switch (script) {\n")
 	for _, s := range m {
 		fmt.Fprintf(w, "case %d: /* %s */\n", s.script, d.scripts.values[s.script])

@@ -1,0 +1,9 @@
+filegroup(
+    name = "data",
+    srcs = [
+        "charmap.csv",
+        "region.csv",
+        "script.csv",
+    ],
+    visibility = ["//visibility:public"],
+)

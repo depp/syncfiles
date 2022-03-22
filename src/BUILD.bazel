@@ -1,0 +1,26 @@
+genrule(
+    name = "data",
+    srcs = [
+        "//charmap:data",
+        "//scripts:data",
+    ],
+    outs = [
+        "charmap.c",
+        "charmap.r",
+        "charmap_roman.dat",
+        "charmap_turkish.dat",
+        "charmap_croatian.dat",
+        "charmap_iceland.dat",
+        "charmap_romanian.dat",
+        "charmap_celtic.dat",
+        "charmap_gaelic.dat",
+        "charmap_greek.dat",
+        "charmap_cyrillic.dat",
+        "charmap_inuit.dat",
+        "charmap_centeuro.dat",
+    ],
+    cmd = "$(execpath //gen:macscript) -dest=$(RULEDIR) -src=. -quiet",
+    tools = [
+        "//gen:macscript",
+    ],
+)

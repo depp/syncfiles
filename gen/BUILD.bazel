@@ -8,6 +8,7 @@ go_binary(
         "rez.go",
         "scriptmap.go",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         "//gen/charmap",
         "//gen/table",

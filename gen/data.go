@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -197,15 +198,15 @@ type scriptdata struct {
 	charmaps []charmapinfo
 }
 
-func readData() (d scriptdata, err error) {
-	d.scripts, err = readConsts("scripts/script.csv")
+func readData(srcdir string) (d scriptdata, err error) {
+	d.scripts, err = readConsts(filepath.Join(srcdir, "scripts/script.csv"))
 	if err != nil {
 		return d, err
 	}
-	d.regions, err = readConsts("scripts/region.csv")
+	d.regions, err = readConsts(filepath.Join(srcdir, "scripts/region.csv"))
 	if err != nil {
 		return d, err
 	}
-	d.charmaps, err = readCharmaps("scripts/charmap.csv", d.scripts.names, d.regions.names)
+	d.charmaps, err = readCharmaps(filepath.Join(srcdir, "scripts/charmap.csv"), d.scripts.names, d.regions.names)
 	return
 }
