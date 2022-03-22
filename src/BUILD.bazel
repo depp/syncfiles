@@ -31,6 +31,8 @@ genrule(
 cc_library(
     name = "convert",
     srcs = [
+        "charmap.c",
+        "convert.h",
         "defs.h",
         "toolbox.c",
     ],
