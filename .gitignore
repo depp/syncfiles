@@ -1,1 +1,2 @@
-/convert_test
+/.user.bazelrc
+/bazel-*

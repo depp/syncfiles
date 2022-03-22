@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary")
+
+go_binary(
+    name = "macscript",
+    srcs = [
+        "data.go",
+        "main.go",
+        "rez.go",
+        "scriptmap.go",
+    ],
+    deps = [
+        "//gen/charmap",
+        "//gen/table",
+    ],
+)

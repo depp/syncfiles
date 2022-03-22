@@ -1,0 +1,16 @@
+build --incompatible_enable_cc_toolchain_resolution
+
+build --define=warnings=off
+
+build:asan --strip=never
+build:asan --copt=-fsanitize=address
+build:asan --copt=-g
+build:asan --copt=-O1
+build:asan --copt=-fno-omit-frame-pointer
+build:asan --linkopt=-fsanitize=address
+
+try-import %workspace%/.user.bazelrc
+
+build --copt=-fdiagnostics-color
+build --host_copt=-fdiagnostics-color
+build --host_copt=-UNDEBUG
