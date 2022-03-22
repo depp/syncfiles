@@ -1,3 +1,6 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bazel:copts.bzl", "COPTS")
+
 genrule(
     name = "data",
     srcs = [
@@ -23,4 +26,13 @@ genrule(
     tools = [
         "//gen:macscript",
     ],
+)
+
+cc_library(
+    name = "convert",
+    srcs = [
+        "defs.h",
+        "toolbox.c",
+    ],
+    copts = COPTS,
 )
