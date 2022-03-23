@@ -4,9 +4,11 @@ go_binary(
     name = "macscript",
     srcs = [
         "data.go",
+        "filenames.go",
         "main.go",
         "rez.go",
         "scriptmap.go",
+        "source.go",
     ],
     visibility = ["//visibility:public"],
     deps = [

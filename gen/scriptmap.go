@@ -1,10 +1,7 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"os"
-	"os/exec"
 	"sort"
 )
 
@@ -73,17 +70,13 @@ func genMap(d *scriptdata) []*scriptmap {
 // writeMap writes out a C function that returns the correct character map for a
 // given script and region.
 func writeMap(d *scriptdata, m []*scriptmap, filename string) error {
-	if !flagQuiet {
-		fmt.Fprintln(os.Stderr, "Writing:", filename)
-	}
-
-	fp, err := os.Create(filename)
+	s, err := createCSource(filename)
 	if err != nil {
 		return err
 	}
-	defer fp.Close()
-	w := bufio.NewWriter(fp)
+	defer s.close()
 
+	w := s.writer
 	w.WriteString(header)
 	w.WriteString(
 		"#include \"src/convert.h\"\n" +
@@ -120,17 +113,5 @@ func writeMap(d *scriptdata, m []*scriptmap, filename string) error {
 			"}\n" +
 			"}\n")
 
-	if err := w.Flush(); err != nil {
-		return err
-	}
-	if err := fp.Close(); err != nil {
-		return err
-	}
-
-	cmd := exec.Command("clang-format", "-i", filename)
-	if err := cmd.Run(); err != nil {
-		fmt.Fprintln(os.Stderr, "Warning: clang-format failed:", err)
-	}
-
-	return nil
+	return s.flush()
 }

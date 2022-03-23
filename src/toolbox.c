@@ -3,17 +3,16 @@
    This is used to run conversion tests on non-Mac OS systems to make
    development easier. These are not intended to make it possible to port the
    converter to non-Mac OS systems. */
-#include "defs.h"
+#include "src/defs.h"
+#include "src/test.h"
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static void Dief(const char *msg, ...)
-	__attribute__((noreturn, format(printf, 1, 2)));
-
-static void Dief(const char *msg, ...) {
+void Dief(const char *msg, ...)
+{
 	va_list ap;
 	fputs("Error: ", stderr);
 	va_start(ap, msg);
@@ -23,7 +22,21 @@ static void Dief(const char *msg, ...) {
 	exit(1);
 }
 
-Handle NewHandle(Size byteCount) {
+void DieErrorf(int errcode, const char *msg, ...)
+{
+	va_list ap;
+	fputs("Error: ", stderr);
+	va_start(ap, msg);
+	vfprintf(stderr, msg, ap);
+	va_end(ap);
+	fputs(": ", stderr);
+	fputs(strerror(errcode), stderr);
+	fputc('\n', stderr);
+	exit(1);
+}
+
+Handle NewHandle(Size byteCount)
+{
 	Ptr p;
 	Handle h;
 
@@ -42,22 +55,26 @@ Handle NewHandle(Size byteCount) {
 	return h;
 }
 
-void HLock(Handle h) {
+void HLock(Handle h)
+{
 	(void)h;
 }
 
-void HUnlock(Handle h) {
+void HUnlock(Handle h)
+{
 	(void)h;
 }
 
-void DisposeHandle(Handle h) {
+void DisposeHandle(Handle h)
+{
 	if (h != NULL) {
 		free(*h);
 		free(h);
 	}
 }
 
-void SetHandleSize(Handle h, Size newSize) {
+void SetHandleSize(Handle h, Size newSize)
+{
 	Ptr p;
 	if (h == NULL) {
 		Dief("SetHandleSize: h = NULL");
@@ -69,11 +86,13 @@ void SetHandleSize(Handle h, Size newSize) {
 	*h = p;
 }
 
-OSErr MemError(void) {
+OSErr MemError(void)
+{
 	/* Memory allocation failures abort the program. */
 	return 0;
 }
 
-void MemClear(void *ptr, Size size) {
+void MemClear(void *ptr, Size size)
+{
 	memset(ptr, 0, size);
 }

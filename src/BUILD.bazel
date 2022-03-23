@@ -1,5 +1,19 @@
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 load("//bazel:copts.bzl", "COPTS")
+
+_data = [
+    "charmap_roman.dat",
+    "charmap_turkish.dat",
+    "charmap_croatian.dat",
+    "charmap_iceland.dat",
+    "charmap_romanian.dat",
+    "charmap_celtic.dat",
+    "charmap_gaelic.dat",
+    "charmap_greek.dat",
+    "charmap_cyrillic.dat",
+    "charmap_inuit.dat",
+    "charmap_centeuro.dat",
+]
 
 genrule(
     name = "data",
@@ -10,18 +24,8 @@ genrule(
     outs = [
         "charmap.c",
         "charmap.r",
-        "charmap_roman.dat",
-        "charmap_turkish.dat",
-        "charmap_croatian.dat",
-        "charmap_iceland.dat",
-        "charmap_romanian.dat",
-        "charmap_celtic.dat",
-        "charmap_gaelic.dat",
-        "charmap_greek.dat",
-        "charmap_cyrillic.dat",
-        "charmap_inuit.dat",
-        "charmap_centeuro.dat",
-    ],
+        "charmap_name.c",
+    ] + _data,
     cmd = "$(execpath //gen:macscript) -dest=$(RULEDIR) -src=. -quiet",
     tools = [
         "//gen:macscript",
@@ -32,9 +36,26 @@ cc_library(
     name = "convert",
     srcs = [
         "charmap.c",
+        "convert.c",
         "convert.h",
+        "convert_1f.c",
+        "convert_1r.c",
         "defs.h",
+        "test.h",
         "toolbox.c",
     ],
     copts = COPTS,
+)
+
+cc_test(
+    name = "convert_test",
+    srcs = [
+        "charmap_name.c",
+        "convert_test.c",
+    ],
+    copts = COPTS,
+    data = _data,
+    deps = [
+        ":convert",
+    ],
 )
