@@ -145,23 +145,24 @@ static void PrintQuotedString(const UInt8 *buf, int len)
 	fputc('"', stderr);
 }
 
-static void Check(int len0, int len1, int len2)
+static void Check(const void *exbuf, int exlen, const void *inbuf, int inlen,
+                  const void *outbuf, int outlen)
 {
 	int i, n, col, diffcol, c1, c2;
 
-	if (len0 == len2 && memcmp(gBuffer[0], gBuffer[2], len2) == 0) {
+	if (exlen == outlen && memcmp(exbuf, outbuf, outlen) == 0) {
 		return;
 	}
 	Failf("incorrect output");
-	n = len0;
-	if (n > len2) {
-		n = len2;
+	n = exlen;
+	if (n > outlen) {
+		n = outlen;
 	}
 	diffcol = -1;
 	col = 0;
 	for (i = 0; i < n; i++) {
-		c1 = gBuffer[0][i];
-		c2 = gBuffer[2][i];
+		c1 = ((const UInt8 *)exbuf)[i];
+		c2 = ((const UInt8 *)outbuf)[i];
 		if (c1 != c2) {
 			diffcol = col;
 			break;
@@ -176,13 +177,13 @@ static void Check(int len0, int len1, int len2)
 		}
 	}
 	fputs("Input:  ", stderr);
-	PrintQuotedString(gBuffer[1], len1);
+	PrintQuotedString(inbuf, inlen);
 	fputc('\n', stderr);
 	fputs("Expect: ", stderr);
-	PrintQuotedString(gBuffer[0], len0);
+	PrintQuotedString(exbuf, exlen);
 	fputc('\n', stderr);
 	fputs("Output: ", stderr);
-	PrintQuotedString(gBuffer[2], len2);
+	PrintQuotedString(outbuf, outlen);
 	fputc('\n', stderr);
 	if (diffcol >= 0) {
 		for (i = 0; i < diffcol + 9; i++) {
@@ -193,19 +194,29 @@ static void Check(int len0, int len1, int len2)
 	fputc('\n', stderr);
 }
 
+static const char *const kLineBreakData[4] = {
+	"Line Break\nA\n\nB\rC\r\rD\r\nE\r\n\r\n",
+	"Line Break\nA\n\nB\nC\n\nD\nE\n\n",
+	"Line Break\rA\r\rB\rC\r\rD\rE\r\r",
+	"Line Break\r\nA\r\n\r\nB\r\nC\r\n\r\nD\r\nE\r\n\r\n",
+};
+
+static const char *const kLineBreakName[4] = {"keep", "LF", "CR", "CRLF"};
+
 static void TestConverter(const char *filename)
 {
 	void *data;
 	size_t datasz;
 	Ptr datap;
 	Handle datah;
-	struct Converter cf, cr;
+	struct Converter cf, cr, cc;
 	struct ConverterState st;
-	int r, i, j, jmax, len0, len1, len2;
+	int r, i, j, k, jmax, len0, len1, len2;
 	OSErr err;
 	UInt8 *ptr;
-	const UInt8 *iptr, *iend;
+	const UInt8 *iptr, *iend, *istart;
 	UInt8 *optr, *oend;
+	int lblen[4];
 
 	data = NULL;
 	cf.data = NULL;
@@ -271,10 +282,43 @@ static void TestConverter(const char *filename)
 			cr.run(*cr.data, kLineBreakKeep, &st, &optr, oend, &iptr, iend);
 			if (iptr != iend) {
 				Failf("some data failed to convert");
-				continue;
+			} else {
+				len2 = optr - gBuffer[2];
+				Check(gBuffer[0], len0, gBuffer[1], len1, gBuffer[2], len2);
 			}
-			len2 = optr - gBuffer[2];
-			Check(len0, len1, len2);
+		}
+	}
+
+	for (i = 0; i < 4; i++) {
+		lblen[i] = strlen(kLineBreakData[i]) + 1;
+	}
+	istart = (const UInt8 *)kLineBreakData[0];
+	for (k = 0; k < 2; k++) {
+		cc = k == 0 ? cf : cr;
+		for (i = 0; i < 4; i++) {
+			len1 = lblen[0]; /* Input data */
+			len0 = lblen[i]; /* Expected output */
+			for (j = 1; j < len1; j++) {
+				StringPrintf(gTestName, sizeof(gTestName),
+				             "%s %s linebreak %s split=%d", filename,
+				             k == 0 ? "forward" : "backward", kLineBreakName[i],
+				             j);
+				st.data = 0;
+				iptr = istart;
+				optr = gBuffer[0];
+				oend = optr + kConvertBufferSize;
+				iend = istart + j;
+				cc.run(*cc.data, i, &st, &optr, oend, &iptr, iend);
+				iend = istart + len1;
+				cc.run(*cc.data, i, &st, &optr, oend, &iptr, iend);
+				if (iptr != iend) {
+					Failf("some data failed to convert");
+				} else {
+					len2 = optr - gBuffer[0];
+					Check(kLineBreakData[i], len0, kLineBreakData[0], len1,
+					      gBuffer[0], len2);
+				}
+			}
 		}
 	}
 
