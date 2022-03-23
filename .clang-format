@@ -4,6 +4,7 @@ AccessModifierOffset: -4
 AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
 DerivePointerAlignment: false
 IncludeBlocks: Preserve
 IncludeCategories:
@@ -20,3 +21,4 @@ SpacesBeforeTrailingComments: 1
 Standard: Cpp11
 TabWidth: 4
 UseTab: AlignWithSpaces
+BreakBeforeBraces: Linux
