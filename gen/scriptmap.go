@@ -78,9 +78,9 @@ func writeMap(d *scriptdata, m []*scriptmap, filename string) error {
 
 	w := s.writer
 	w.WriteString(header)
+	s.include("convert.h")
 	w.WriteString(
-		"#include \"convert/convert.h\"\n" +
-			"int GetCharmap(int script, int region) {\n" +
+		"int GetCharmap(int script, int region) {\n" +
 			"switch (script) {\n")
 	for _, s := range m {
 		fmt.Fprintf(w, "case %d: /* %s */\n", s.script, d.scripts.values[s.script])

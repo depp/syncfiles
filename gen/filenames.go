@@ -1,6 +1,8 @@
 package main
 
-import "strconv"
+import (
+	"strconv"
+)
 
 func writeFilenames(charmaps []string, filename string) error {
 	s, err := createCSource(filename)
@@ -10,9 +12,8 @@ func writeFilenames(charmaps []string, filename string) error {
 
 	w := s.writer
 	w.WriteString(header)
-	w.WriteString(
-		"#include \"convert/test.h\"\n" +
-			"const char *const kCharsetFilename[] = {\n")
+	s.include("test.h")
+	w.WriteString("const char *const kCharsetFilename[] = {\n")
 	for _, fn := range charmaps {
 		if fn != "" {
 			w.WriteByte('\t')

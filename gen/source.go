@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 )
 
 type csource struct {
@@ -61,4 +62,8 @@ func (s *csource) flush() error {
 	}
 	s.filename = ""
 	return nil
+}
+
+func (s *csource) include(name string) {
+	fmt.Fprintf(s.writer, "#include \"%s\"\n", path.Join(srcdirname, name))
 }
