@@ -26,6 +26,10 @@ func getSrcdir() (string, error) {
 	if flagSrc != "" {
 		return flagSrc, nil
 	}
+	workspace := os.Getenv("BUILD_WORKSPACE_DIRECTORY")
+	if workspace != "" {
+		return workspace, nil
+	}
 	exe, err := os.Executable()
 	if err != nil {
 		return "", err
