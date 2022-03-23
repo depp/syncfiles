@@ -2,7 +2,7 @@
 #define convert_h
 /* convert.h - character set conversion routines. */
 
-#include "src/defs.h"
+#include "convert/defs.h"
 
 /* Error codes. */
 enum

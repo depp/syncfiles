@@ -11,7 +11,7 @@ func writeFilenames(charmaps []string, filename string) error {
 	w := s.writer
 	w.WriteString(header)
 	w.WriteString(
-		"#include \"src/test.h\"\n" +
+		"#include \"convert/test.h\"\n" +
 			"const char *const kCharsetFilename[] = {\n")
 	for _, fn := range charmaps {
 		if fn != "" {

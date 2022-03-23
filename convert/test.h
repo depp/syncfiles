@@ -2,7 +2,7 @@
 #define test_h
 /* test.h - unit testing definitions. */
 
-#include "src/defs.h"
+#include "convert/defs.h"
 
 /* List of all data files, terminated by NULL. */
 extern const char *const kCharsetFilename[];

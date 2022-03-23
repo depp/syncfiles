@@ -1,4 +1,4 @@
-#include "src/convert.h"
+#include "convert/convert.h"
 
 struct ConvertEngine {
 	ConvertBuildf build;

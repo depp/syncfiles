@@ -1,6 +1,6 @@
 /* convert_1f.c - Forward conversion from extended ASCII to UTF-8. */
-#include "src/convert.h"
-#include "src/defs.h"
+#include "convert/convert.h"
+#include "convert/defs.h"
 
 struct Convert1fData {
 	/* Unicode characters, encoded in UTF-8, and packed MSB first. Always either

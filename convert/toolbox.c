@@ -3,8 +3,8 @@
    This is used to run conversion tests on non-Mac OS systems to make
    development easier. These are not intended to make it possible to port the
    converter to non-Mac OS systems. */
-#include "src/defs.h"
-#include "src/test.h"
+#include "convert/defs.h"
+#include "convert/test.h"
 
 #include <stdarg.h>
 #include <stdio.h>

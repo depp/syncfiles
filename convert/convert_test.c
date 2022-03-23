@@ -1,8 +1,8 @@
 /* Converter test. */
 #define _XOPEN_SOURCE 500
 
-#include "src/convert.h"
-#include "src/test.h"
+#include "convert/convert.h"
+#include "convert/test.h"
 
 #include <errno.h>
 #include <stdarg.h>
@@ -74,7 +74,7 @@ static void ReadFile(const char *filename, void **datap, size_t *sizep)
 	size_t size, alloc, newalloc, amt;
 	int err;
 
-	StringPrintf(fnbuf, sizeof(fnbuf), "src/%s", filename);
+	StringPrintf(fnbuf, sizeof(fnbuf), "convert/%s", filename);
 
 	fp = fopen(fnbuf, "rb");
 	if (fp == NULL) {

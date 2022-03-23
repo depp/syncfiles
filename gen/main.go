@@ -44,7 +44,7 @@ func mainE() error {
 	}
 	destdir := flagDest
 	if destdir == "" {
-		destdir = filepath.Join(srcdir, "src")
+		destdir = filepath.Join(srcdir, "convert")
 	}
 
 	// Read metadata.
