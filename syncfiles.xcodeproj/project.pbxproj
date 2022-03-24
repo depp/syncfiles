@@ -1,0 +1,214 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 42;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		3892E75727EBFC0B00C0FC23 /* convert.c in Sources */ = {isa = PBXBuildFile; fileRef = 3892E74D27EBFC0B00C0FC23 /* convert.c */; };
+		3892E75827EBFC0B00C0FC23 /* convert_1f.c in Sources */ = {isa = PBXBuildFile; fileRef = 3892E74F27EBFC0B00C0FC23 /* convert_1f.c */; };
+		3892E75927EBFC0B00C0FC23 /* convert_1r.c in Sources */ = {isa = PBXBuildFile; fileRef = 3892E75027EBFC0B00C0FC23 /* convert_1r.c */; };
+		3892E75A27EBFC0B00C0FC23 /* convert_test.c in Sources */ = {isa = PBXBuildFile; fileRef = 3892E75127EBFC0B00C0FC23 /* convert_test.c */; };
+		3892E75B27EBFC0B00C0FC23 /* toolbox.c in Sources */ = {isa = PBXBuildFile; fileRef = 3892E75627EBFC0B00C0FC23 /* toolbox.c */; };
+		3892E76C27EC0FF500C0FC23 /* charmap.c in Sources */ = {isa = PBXBuildFile; fileRef = 3892E76B27EC0FF500C0FC23 /* charmap.c */; };
+		3892E76F27EC102700C0FC23 /* charmap_name.c in Sources */ = {isa = PBXBuildFile; fileRef = 3892E76E27EC102700C0FC23 /* charmap_name.c */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		3892E74027EBDBCB00C0FC23 /* syncfiles */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = syncfiles; sourceTree = BUILT_PRODUCTS_DIR; };
+		3892E74D27EBFC0B00C0FC23 /* convert.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = convert.c; sourceTree = "<group>"; };
+		3892E74E27EBFC0B00C0FC23 /* convert.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = convert.h; sourceTree = "<group>"; };
+		3892E74F27EBFC0B00C0FC23 /* convert_1f.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = convert_1f.c; sourceTree = "<group>"; };
+		3892E75027EBFC0B00C0FC23 /* convert_1r.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = convert_1r.c; sourceTree = "<group>"; };
+		3892E75127EBFC0B00C0FC23 /* convert_test.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = convert_test.c; sourceTree = "<group>"; };
+		3892E75227EBFC0B00C0FC23 /* defs.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = defs.h; sourceTree = "<group>"; };
+		3892E75427EBFC0B00C0FC23 /* resources.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = resources.h; sourceTree = "<group>"; };
+		3892E75627EBFC0B00C0FC23 /* toolbox.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = toolbox.c; sourceTree = "<group>"; };
+		3892E76B27EC0FF500C0FC23 /* charmap.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = charmap.c; sourceTree = "<group>"; };
+		3892E76E27EC102700C0FC23 /* charmap_name.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = charmap_name.c; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		3892E73E27EBDBCB00C0FC23 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		3892E72D27EBDB6E00C0FC23 = {
+			isa = PBXGroup;
+			children = (
+				3892E74B27EBFC0B00C0FC23 /* convert */,
+				3892E74127EBDBCB00C0FC23 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		3892E74127EBDBCB00C0FC23 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3892E74027EBDBCB00C0FC23 /* syncfiles */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3892E74B27EBFC0B00C0FC23 /* convert */ = {
+			isa = PBXGroup;
+			children = (
+				3892E76B27EC0FF500C0FC23 /* charmap.c */,
+				3892E76E27EC102700C0FC23 /* charmap_name.c */,
+				3892E74D27EBFC0B00C0FC23 /* convert.c */,
+				3892E74E27EBFC0B00C0FC23 /* convert.h */,
+				3892E74F27EBFC0B00C0FC23 /* convert_1f.c */,
+				3892E75027EBFC0B00C0FC23 /* convert_1r.c */,
+				3892E75127EBFC0B00C0FC23 /* convert_test.c */,
+				3892E75227EBFC0B00C0FC23 /* defs.h */,
+				3892E75427EBFC0B00C0FC23 /* resources.h */,
+				3892E75627EBFC0B00C0FC23 /* toolbox.c */,
+			);
+			path = convert;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		3892E73F27EBDBCB00C0FC23 /* SyncFiles CLI */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3892E74327EBDBCE00C0FC23 /* Build configuration list for PBXNativeTarget "SyncFiles CLI" */;
+			buildPhases = (
+				3892E73D27EBDBCB00C0FC23 /* Sources */,
+				3892E73E27EBDBCB00C0FC23 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "SyncFiles CLI";
+			productName = "SyncFiles CLI";
+			productReference = 3892E74027EBDBCB00C0FC23 /* syncfiles */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		3892E72F27EBDB6E00C0FC23 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 3892E73027EBDB6F00C0FC23 /* Build configuration list for PBXProject "syncfiles" */;
+			hasScannedForEncodings = 0;
+			mainGroup = 3892E72D27EBDB6E00C0FC23;
+			productRefGroup = 3892E74127EBDBCB00C0FC23 /* Products */;
+			projectDirPath = "";
+			targets = (
+				3892E73F27EBDBCB00C0FC23 /* SyncFiles CLI */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3892E73D27EBDBCB00C0FC23 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3892E75727EBFC0B00C0FC23 /* convert.c in Sources */,
+				3892E75827EBFC0B00C0FC23 /* convert_1f.c in Sources */,
+				3892E75927EBFC0B00C0FC23 /* convert_1r.c in Sources */,
+				3892E75A27EBFC0B00C0FC23 /* convert_test.c in Sources */,
+				3892E75B27EBFC0B00C0FC23 /* toolbox.c in Sources */,
+				3892E76C27EC0FF500C0FC23 /* charmap.c in Sources */,
+				3892E76F27EC102700C0FC23 /* charmap_name.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		3892E73127EBDB6F00C0FC23 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+			};
+			name = Debug;
+		};
+		3892E73227EBDB6F00C0FC23 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+			};
+			name = Release;
+		};
+		3892E74427EBDBCE00C0FC23 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/Carbon.framework/Headers/Carbon.h";
+				GCC_PREPROCESSOR_DEFINITIONS = USE_CARBON;
+				INSTALL_PATH = "$(HOME)/bin";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Carbon,
+				);
+				PREBINDING = NO;
+				PRODUCT_NAME = syncfiles;
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)";
+				ZERO_LINK = YES;
+			};
+			name = Debug;
+		};
+		3892E74527EBDBCE00C0FC23 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/Carbon.framework/Headers/Carbon.h";
+				GCC_PREPROCESSOR_DEFINITIONS = USE_CARBON;
+				INSTALL_PATH = "$(HOME)/bin";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Carbon,
+				);
+				PREBINDING = NO;
+				PRODUCT_NAME = syncfiles;
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)";
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3892E73027EBDB6F00C0FC23 /* Build configuration list for PBXProject "syncfiles" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3892E73127EBDB6F00C0FC23 /* Debug */,
+				3892E73227EBDB6F00C0FC23 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3892E74327EBDBCE00C0FC23 /* Build configuration list for PBXNativeTarget "SyncFiles CLI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3892E74427EBDBCE00C0FC23 /* Debug */,
+				3892E74527EBDBCE00C0FC23 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 3892E72F27EBDB6E00C0FC23 /* Project object */;
+}

@@ -6,6 +6,10 @@
 
 #include <MacTypes.h>
 
+#elif USE_CARBON
+
+/* We get definitions from pre-compiled headers. */
+
 #else
 
 /* Definitions in <MacTypes.h> */
