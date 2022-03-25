@@ -3,7 +3,7 @@
 
 #include "convert/convert.h"
 #include "convert/data.h"
-#include "convert/test.h"
+#include "lib/test.h"
 
 #include <errno.h>
 #include <stdarg.h>

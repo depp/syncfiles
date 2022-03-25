@@ -28,15 +28,15 @@ cc_library(
         "convert.c",
         "convert_1f.c",
         "convert_1r.c",
-        "toolbox.c",
     ],
     hdrs = [
         "convert.h",
         "data.h",
-        "defs.h",
-        "test.h",
     ],
     copts = COPTS,
+    deps = [
+        "//lib",
+    ],
 )
 
 cc_test(
@@ -47,5 +47,6 @@ cc_test(
     copts = COPTS,
     deps = [
         ":convert",
+        "//lib",
     ],
 )

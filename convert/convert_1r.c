@@ -1,6 +1,6 @@
 /* convert_1r.c - Reverse conversion from UTF-8 to extended ASCII. */
 #include "convert/convert.h"
-#include "convert/defs.h"
+#include "lib/defs.h"
 
 enum
 {

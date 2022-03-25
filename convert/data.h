@@ -1,7 +1,7 @@
 #ifndef data_h
 #define data_h
 /* data.h - charmap data, not used for classic Mac OS builds */
-#include "convert/defs.h"
+#include "lib/defs.h"
 
 /* Get the ID of the given character map. Return NULL if no such character map
    exists. */

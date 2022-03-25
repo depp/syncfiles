@@ -2,7 +2,7 @@
 #define test_h
 /* test.h - unit testing definitions. */
 
-#include "convert/defs.h"
+#include "lib/defs.h"
 
 /* Print an error message and exit. */
 void Dief(const char *msg, ...) __attribute__((noreturn, format(printf, 1, 2)));

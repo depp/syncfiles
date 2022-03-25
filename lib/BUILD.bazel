@@ -1,0 +1,15 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bazel:copts.bzl", "COPTS")
+
+cc_library(
+    name = "lib",
+    srcs = [
+        "toolbox.c",
+    ],
+    hdrs = [
+        "defs.h",
+        "test.h",
+    ],
+    copts = COPTS,
+    visibility = ["//visibility:public"],
+)
