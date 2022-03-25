@@ -28,12 +28,11 @@ struct TTree {
 	int count;
 };
 
-static int CreateTree(struct TTree *tree, Handle data, Size datasz, OSErr *errp)
+static ErrorCode CreateTree(struct TTree *tree, Handle data, Size datasz)
 {
 	struct TNode **nodes, *node;
 	int i, j, dpos, enclen, encend, state, cur, nodecount, nodealloc;
 	unsigned ch;
-	OSErr err;
 
 	/* Create a tree with a root node mapping all the ASCII characters except
 	   NUL, CR, and LF. NUL won't map because an output of 0 is interpreted as
@@ -42,8 +41,7 @@ static int CreateTree(struct TTree *tree, Handle data, Size datasz, OSErr *errp)
 	nodes =
 		(struct TNode **)NewHandle(kInitialTableAlloc * sizeof(struct TNode));
 	if (nodes == NULL) {
-		err = MemError();
-		goto have_error;
+		return kErrorNoMemory;
 	}
 	nodecount = 1;
 	nodealloc = kInitialTableAlloc;
@@ -81,11 +79,11 @@ static int CreateTree(struct TTree *tree, Handle data, Size datasz, OSErr *errp)
 					if (state == 0) {
 						if (nodecount >= nodealloc) {
 							nodealloc *= 2;
-							SetHandleSize((Handle)nodes,
-							              nodealloc * sizeof(struct TNode));
-							err = MemError();
-							if (err != 0) {
-								goto have_error;
+							if (!ResizeHandle(
+									(Handle)nodes,
+									nodealloc * sizeof(struct TNode))) {
+								DisposeHandle((Handle)nodes);
+								return kErrorNoMemory;
 							}
 							node = *nodes + cur;
 						}
@@ -105,7 +103,10 @@ static int CreateTree(struct TTree *tree, Handle data, Size datasz, OSErr *errp)
 			}
 		}
 	}
-	SetHandleSize((Handle)nodes, nodecount * sizeof(struct TNode));
+	if (!ResizeHandle((Handle)nodes, nodecount * sizeof(struct TNode))) {
+		DisposeHandle((Handle)nodes);
+		return kErrorNoMemory;
+	}
 	tree->nodes = nodes;
 	tree->count = nodecount;
 	return 0;
@@ -113,11 +114,6 @@ static int CreateTree(struct TTree *tree, Handle data, Size datasz, OSErr *errp)
 bad_table:
 	DisposeHandle((Handle)nodes);
 	return kErrorBadData;
-
-have_error:
-	DisposeHandle((Handle)nodes);
-	*errp = err;
-	return kErrorNoMemory;
 }
 
 struct NodeInfo {
@@ -139,8 +135,7 @@ struct CNode {
 	UInt8 span;
 };
 
-static int CompactTree(Handle *out, struct TNode **nodes, int nodecount,
-                       OSErr *errp)
+static ErrorCode CompactTree(Handle *out, struct TNode **nodes, int nodecount)
 {
 	Handle ctree;
 	struct TNode *node;
@@ -153,7 +148,6 @@ static int CompactTree(Handle *out, struct TNode **nodes, int nodecount,
 	/* Figure out where each compacted node will go. */
 	infos = (struct NodeInfo **)NewHandle(sizeof(struct NodeInfo) * nodecount);
 	if (infos == NULL) {
-		*errp = MemError();
 		return kErrorNoMemory;
 	}
 	offset = 0;
@@ -178,7 +172,6 @@ static int CompactTree(Handle *out, struct TNode **nodes, int nodecount,
 	/* Create the compacted tree. */
 	ctree = NewHandle(offset);
 	if (ctree == NULL) {
-		*errp = MemError();
 		DisposeHandle((Handle)infos);
 		return kErrorNoMemory;
 	}
@@ -208,18 +201,18 @@ static int CompactTree(Handle *out, struct TNode **nodes, int nodecount,
 	return 0;
 }
 
-int Convert1rBuild(Handle *out, Handle data, Size datasz, OSErr *errp)
+ErrorCode Convert1rBuild(Handle *out, Handle data, Size datasz)
 {
 	struct TTree table;
-	int r;
+	ErrorCode err;
 
-	r = CreateTree(&table, data, datasz, errp);
-	if (r != 0) {
-		return r;
+	err = CreateTree(&table, data, datasz);
+	if (err != 0) {
+		return err;
 	}
-	r = CompactTree(out, table.nodes, table.count, errp);
+	err = CompactTree(out, table.nodes, table.count);
 	DisposeHandle((Handle)table.nodes);
-	return r;
+	return err;
 }
 
 struct Convert1rState {

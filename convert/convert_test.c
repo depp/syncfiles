@@ -41,7 +41,7 @@ static void Failf(const char *msg, ...)
 
 static const char *const kErrorNames[] = {"ok", "no memory", "bad data"};
 
-static const char *ErrorName(int err)
+static const char *ErrorName(ErrorCode err)
 {
 	if (err < 0 || (int)(sizeof(kErrorNames) / sizeof(*kErrorNames)) <= err) {
 		Dief("bad error code: %d", err);
@@ -151,12 +151,12 @@ static void TestConverter(const char *name, struct CharmapData data)
 	Handle datah;
 	struct Converter cf, cr, cc;
 	struct ConverterState st;
-	int r, i, j, k, jmax, len0, len1, len2;
-	OSErr err;
+	int i, j, k, jmax, len0, len1, len2;
 	UInt8 *ptr;
 	const UInt8 *iptr, *iend, *istart;
 	UInt8 *optr, *oend;
 	int lblen[4];
+	ErrorCode err;
 
 	cf.data = NULL;
 	cr.data = NULL;
@@ -166,14 +166,14 @@ static void TestConverter(const char *name, struct CharmapData data)
 	/* Load the converter into memory and build the conversion table. */
 	datap = (void *)data.ptr;
 	datah = &datap;
-	r = ConverterBuild(&cf, datah, data.size, kToUTF8, &err);
-	if (r != 0) {
-		Failf("ConverterBuild: to UTF-8: %s", ErrorName(r));
+	err = ConverterBuild(&cf, datah, data.size, kToUTF8);
+	if (err != 0) {
+		Failf("ConverterBuild: to UTF-8: %s", ErrorName(err));
 		goto done;
 	}
-	r = ConverterBuild(&cr, datah, data.size, kFromUTF8, &err);
-	if (r != 0) {
-		Failf("ConverterBuild: from UTF-8: %s", ErrorName(r));
+	err = ConverterBuild(&cr, datah, data.size, kFromUTF8);
+	if (err != 0) {
+		Failf("ConverterBuild: from UTF-8: %s", ErrorName(err));
 		goto done;
 	}
 
@@ -282,7 +282,7 @@ int main(int argc, char **argv)
 	for (i = 0; i < 3; i++) {
 		buf = malloc(kConvertBufferSize);
 		if (buf == NULL) {
-			DieErrorf(errno, "malloc");
+			Dief("malloc failed");
 		}
 		gBuffer[i] = buf;
 	}

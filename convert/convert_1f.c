@@ -12,7 +12,7 @@ struct Convert1fState {
 	UInt8 lastch;
 };
 
-int Convert1fBuild(Handle *out, Handle data, Size datasz, OSErr *errp)
+ErrorCode Convert1fBuild(Handle *out, Handle data, Size datasz)
 {
 	Handle h;
 	struct Convert1fData *cvt;
@@ -22,7 +22,6 @@ int Convert1fBuild(Handle *out, Handle data, Size datasz, OSErr *errp)
 
 	h = NewHandle(sizeof(struct Convert1fData));
 	if (h == NULL) {
-		*errp = MemError();
 		return kErrorNoMemory;
 	}
 	cvt = (void *)*h;

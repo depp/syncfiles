@@ -22,19 +22,6 @@ void Dief(const char *msg, ...)
 	exit(1);
 }
 
-void DieErrorf(int errcode, const char *msg, ...)
-{
-	va_list ap;
-	fputs("Error: ", stderr);
-	va_start(ap, msg);
-	vfprintf(stderr, msg, ap);
-	va_end(ap);
-	fputs(": ", stderr);
-	fputs(strerror(errcode), stderr);
-	fputc('\n', stderr);
-	exit(1);
-}
-
 Handle NewHandle(Size byteCount)
 {
 	Ptr p;
@@ -45,24 +32,15 @@ Handle NewHandle(Size byteCount)
 	}
 	p = malloc(byteCount);
 	if (byteCount > 0 && p == NULL) {
-		Dief("NewHandle: malloc failed");
+		return NULL;
 	}
 	h = malloc(sizeof(Ptr));
 	if (h == NULL) {
-		Dief("NewHandle: malloc failed");
+		free(p);
+		return NULL;
 	}
 	*h = p;
 	return h;
-}
-
-void HLock(Handle h)
-{
-	(void)h;
-}
-
-void HUnlock(Handle h)
-{
-	(void)h;
 }
 
 void DisposeHandle(Handle h)
@@ -73,23 +51,21 @@ void DisposeHandle(Handle h)
 	}
 }
 
-void SetHandleSize(Handle h, Size newSize)
+Boolean ResizeHandle(Handle h, Size newSize)
 {
 	Ptr p;
 	if (h == NULL) {
-		Dief("SetHandleSize: h = NULL");
+		Dief("ResizeHandle: h = NULL");
+	}
+	if (newSize < 0) {
+		Dief("ResizeHandle: newSize = %ld", newSize);
 	}
 	p = realloc(*h, newSize);
 	if (newSize > 0 && p == NULL) {
-		Dief("SetHandleSize: realloc failed");
+		return false;
 	}
 	*h = p;
-}
-
-OSErr MemError(void)
-{
-	/* Memory allocation failures abort the program. */
-	return 0;
+	return true;
 }
 
 void MemClear(void *ptr, Size size)

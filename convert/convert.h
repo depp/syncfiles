@@ -4,19 +4,6 @@
 
 #include "lib/defs.h"
 
-/* Error codes. */
-enum
-{
-	/* No error. */
-	kErrorOK,
-
-	/* Memory allocation failed. */
-	kErrorNoMemory,
-
-	/* Invaild table data. */
-	kErrorBadData
-};
-
 enum
 {
 	/* Constants for CR and LF. Note that we should not use '\n' or '\r'
@@ -62,8 +49,7 @@ struct ConverterState {
 };
 
 /* Implementation function for building a converter. */
-typedef int (*ConvertBuildf)(Handle *out, Handle data, Size datasz,
-                             OSErr *errp);
+typedef ErrorCode (*ConvertBuildf)(Handle *out, Handle data, Size datasz);
 
 /* Implementation function for running a converter. */
 typedef void (*ConvertRunf)(const void *cvtptr, LineBreakConversion lc,
@@ -78,16 +64,16 @@ struct Converter {
 
 /* Build a converter from the given conversion table data. */
 int ConverterBuild(struct Converter *c, Handle data, Size datasz,
-                   ConvertDirection direction, OSErr *errp);
+                   ConvertDirection direction);
 
 /* Engine 1: extended ASCII */
 
-int Convert1fBuild(Handle *out, Handle data, Size datasz, OSErr *errp);
+ErrorCode Convert1fBuild(Handle *out, Handle data, Size datasz);
 void Convert1fRun(const void *cvtptr, LineBreakConversion lc,
                   struct ConverterState *stateptr, UInt8 **optr, UInt8 *oend,
                   const UInt8 **iptr, const UInt8 *iend);
 
-int Convert1rBuild(Handle *out, Handle data, Size datasz, OSErr *errp);
+ErrorCode Convert1rBuild(Handle *out, Handle data, Size datasz);
 void Convert1rRun(const void *cvtptr, LineBreakConversion lc,
                   struct ConverterState *stateptr, UInt8 **optr, UInt8 *oend,
                   const UInt8 **iptr, const UInt8 *iend);
