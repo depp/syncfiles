@@ -2,5 +2,12 @@
   "editor.rulers": [80],
   "editor.detectIndentation": false,
   "editor.tabSize": 4,
-  "editor.insertSpaces": false
+  "editor.insertSpaces": false,
+  "[starlark]": {
+    "editor.insertSpaces": true
+  },
+  "[json]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2
+  }
 }
