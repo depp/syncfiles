@@ -1,20 +1,6 @@
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 load("//bazel:copts.bzl", "COPTS")
 
-_data = [
-    "charmap_roman.dat",
-    "charmap_turkish.dat",
-    "charmap_croatian.dat",
-    "charmap_iceland.dat",
-    "charmap_romanian.dat",
-    "charmap_celtic.dat",
-    "charmap_gaelic.dat",
-    "charmap_greek.dat",
-    "charmap_cyrillic.dat",
-    "charmap_inuit.dat",
-    "charmap_centeuro.dat",
-]
-
 genrule(
     name = "data",
     srcs = [
@@ -22,11 +8,12 @@ genrule(
         "//scripts:data",
     ],
     outs = [
-        "charmap.c",
+        "charmap_data.c",
+        "charmap_info.c",
+        "charmap_region.c",
         "charmap.r",
-        "charmap_name.c",
-    ] + _data,
-    cmd = "$(execpath //gen:macscript) -dest=$(RULEDIR) -src=. -quiet",
+    ],
+    cmd = "$(execpath //gen:macscript) -dest=$(RULEDIR) -src=. -quiet -format=false",
     tools = [
         "//gen:macscript",
     ],
@@ -35,14 +22,19 @@ genrule(
 cc_library(
     name = "convert",
     srcs = [
-        "charmap.c",
+        "charmap_data.c",
+        "charmap_info.c",
+        "charmap_region.c",
         "convert.c",
-        "convert.h",
         "convert_1f.c",
         "convert_1r.c",
+        "toolbox.c",
+    ],
+    hdrs = [
+        "convert.h",
+        "data.h",
         "defs.h",
         "test.h",
-        "toolbox.c",
     ],
     copts = COPTS,
 )
@@ -50,11 +42,9 @@ cc_library(
 cc_test(
     name = "convert_test",
     srcs = [
-        "charmap_name.c",
         "convert_test.c",
     ],
     copts = COPTS,
-    data = _data,
     deps = [
         ":convert",
     ],

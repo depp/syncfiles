@@ -7,10 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
-
-	"moria.us/macscript/charmap"
-	"moria.us/macscript/table"
 )
 
 const (
@@ -57,37 +53,19 @@ func mainE() error {
 	}
 
 	// Compile and emit charmap data.
-	cms := make([]string, len(d.charmaps))
 	var hascmap bool
-	for i, c := range d.charmaps {
-		if c.file == "" {
-			continue
-		}
-		cm, err := charmap.ReadFile(filepath.Join(srcdir, "charmap", c.file))
-		if err != nil {
-			return err
-		}
-		t, err := table.Create(cm)
-		if err != nil {
-			if e, ok := err.(*table.UnsupportedError); ok {
-				if !flagQuiet {
-					fmt.Fprintf(os.Stderr, "Warning: unsupported charmap %q: %s\n", c.file, e.Message)
-				}
-				continue
+	for _, c := range d.charmaps {
+		if len(c.data) != 0 {
+			name := "charmap_" + c.filename + ".dat"
+			fpath := filepath.Join(destdir, name)
+			if !flagQuiet {
+				fmt.Fprintln(os.Stderr, "Writing:", fpath)
 			}
-			return fmt.Errorf("%s: %v", c.file, err)
+			if err := ioutil.WriteFile(fpath, c.data, 0666); err != nil {
+				return err
+			}
+			hascmap = true
 		}
-		data := t.Data()
-		name := "charmap_" + strings.ToLower(strings.TrimSuffix(c.file, ".TXT")) + ".dat"
-		fpath := filepath.Join(destdir, name)
-		if !flagQuiet {
-			fmt.Fprintln(os.Stderr, "Writing:", fpath)
-		}
-		if err := ioutil.WriteFile(fpath, data, 0666); err != nil {
-			return err
-		}
-		cms[i] = name
-		hascmap = true
 	}
 	if !hascmap {
 		return errors.New("could not compile any character map")
@@ -95,13 +73,16 @@ func mainE() error {
 
 	// Write generated output.
 	m := genMap(&d)
-	if err := writeMap(&d, m, filepath.Join(destdir, "charmap.c")); err != nil {
+	if err := writeMap(&d, m, filepath.Join(destdir, "charmap_region.c")); err != nil {
 		return err
 	}
-	if err := writeFilenames(cms, filepath.Join(destdir, "charmap_name.c")); err != nil {
+	if err := writeInfo(&d, filepath.Join(destdir, "charmap_info.c")); err != nil {
 		return err
 	}
-	if err := writeRez(&d, cms, filepath.Join(destdir, "charmap.r")); err != nil {
+	if err := writeData(&d, filepath.Join(destdir, "charmap_data.c")); err != nil {
+		return err
+	}
+	if err := writeRez(&d, filepath.Join(destdir, "charmap.r")); err != nil {
 		return err
 	}
 	return nil

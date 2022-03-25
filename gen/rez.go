@@ -41,7 +41,7 @@ func constStrings(c *constmap) []string {
 	return r
 }
 
-func writeRez(d *scriptdata, charmaps []string, filename string) error {
+func writeRez(d *scriptdata, filename string) error {
 	if !flagQuiet {
 		fmt.Fprintln(os.Stderr, "Writing:", filename)
 	}
@@ -59,9 +59,9 @@ func writeRez(d *scriptdata, charmaps []string, filename string) error {
 	writeStrings(w, `rSTRS_Charmaps, "Character Maps"`, charmapNames(d))
 	writeStrings(w, `rSTRS_Scripts, "Scripts"`, constStrings(&d.scripts))
 	writeStrings(w, `rSTRS_Regions, "Regions"`, constStrings(&d.regions))
-	for i, cm := range charmaps {
-		if cm != "" {
-			fmt.Fprintf(w, "read 'cmap' (%d, %q) %q;\n", 128+i, d.charmaps[i].name, cm)
+	for i, cm := range d.charmaps {
+		if cm.filename != "" {
+			fmt.Fprintf(w, "read 'cmap' (%d, %q) %q;\n", 128+i, cm.name, cm.filename)
 		}
 	}
 

@@ -4,9 +4,6 @@
 
 #include "convert/defs.h"
 
-/* List of all data files, terminated by NULL. */
-extern const char *const kCharsetFilename[];
-
 /* Print an error message and exit. */
 void Dief(const char *msg, ...) __attribute__((noreturn, format(printf, 1, 2)));
 

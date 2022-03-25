@@ -10,9 +10,19 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"moria.us/macscript/charmap"
+	"moria.us/macscript/table"
 )
 
-var isIdent = regexp.MustCompile("^[a-zA-Z][_a-zA-Z0-9]*$")
+var (
+	isIdent      = regexp.MustCompile("^[a-zA-Z][_a-zA-Z0-9]*$")
+	nonIdentPart = regexp.MustCompile("[^a-zA-Z0-9]+")
+)
+
+func makeID(name string) string {
+	return nonIdentPart.ReplaceAllLiteralString(name, "")
+}
 
 // A dataError indicates an error in the contents of one of the data files.
 type dataError struct {
@@ -113,14 +123,16 @@ func readConsts(filename string) (m constmap, err error) {
 }
 
 type charmapinfo struct {
-	name    string
-	file    string
-	script  int
-	regions []int
+	name     string
+	filename string
+	id       string
+	script   int
+	regions  []int
+	data     []byte
 }
 
 // readCharmaps reads and parses the charmaps.csv file.
-func readCharmaps(filename string, scripts, regions map[string]int) ([]charmapinfo, error) {
+func readCharmaps(srcdir, filename string, scripts, regions map[string]int) ([]charmapinfo, error) {
 	fp, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -152,9 +164,11 @@ func readCharmaps(filename string, scripts, regions map[string]int) ([]charmapin
 		}
 		index := len(arr)
 		ifo := charmapinfo{
-			name: row[0],
-			file: row[1],
+			name:     row[0],
+			filename: strings.ToLower(strings.TrimSuffix(row[1], ".TXT")),
+			id:       makeID(row[0]),
 		}
+		file := row[1]
 		sname := row[2]
 		var e bool
 		ifo.script, e = scripts[sname]
@@ -178,14 +192,31 @@ func readCharmaps(filename string, scripts, regions map[string]int) ([]charmapin
 					ifo.regions = append(ifo.regions, rg)
 				case omap != index:
 					line, _ := r.FieldPos(0)
-					return nil, &dataError{filename, line, 0, fmt.Errorf("charmap conflicts with previou charmaps: %q", arr[omap].name)}
+					return nil, &dataError{filename, line, 0, fmt.Errorf("charmap conflicts with previous charmaps: %q", arr[omap].name)}
 				}
 			}
 		} else {
 			if omap, e := gcharmaps[ifo.script]; e {
 				line, _ := r.FieldPos(0)
-				return nil, &dataError{filename, line, 0, fmt.Errorf("charmap conflicts with previou charmaps: %q", arr[omap].name)}
+				return nil, &dataError{filename, line, 0, fmt.Errorf("charmap conflicts with previous charmaps: %q", arr[omap].name)}
 			}
+		}
+		if file != "" {
+			cm, err := charmap.ReadFile(filepath.Join(srcdir, "charmap", file))
+			if err != nil {
+				return nil, err
+			}
+			t, err := table.Create(cm)
+			if err != nil {
+				if e, ok := err.(*table.UnsupportedError); ok {
+					if !flagQuiet {
+						fmt.Fprintf(os.Stderr, "Warning: unsupported charmap %q: %s\n", file, e.Message)
+					}
+					continue
+				}
+				return nil, fmt.Errorf("%s: %v", file, err)
+			}
+			ifo.data = t.Data()
 		}
 		arr = append(arr, ifo)
 	}
@@ -207,6 +238,6 @@ func readData(srcdir string) (d scriptdata, err error) {
 	if err != nil {
 		return d, err
 	}
-	d.charmaps, err = readCharmaps(filepath.Join(srcdir, "scripts/charmap.csv"), d.scripts.names, d.regions.names)
+	d.charmaps, err = readCharmaps(srcdir, filepath.Join(srcdir, "scripts/charmap.csv"), d.scripts.names, d.regions.names)
 	return
 }

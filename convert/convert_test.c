@@ -2,6 +2,7 @@
 #define _XOPEN_SOURCE 500
 
 #include "convert/convert.h"
+#include "convert/data.h"
 #include "convert/test.h"
 
 #include <errno.h>
@@ -63,65 +64,6 @@ static void StringPrintf(char *dest, size_t destsz, const char *fmt, ...)
 	if (n < 0 || n >= (int)destsz) {
 		Dief("snprintf: overflow");
 	}
-}
-
-/* Read a file in its entirety. */
-static void ReadFile(const char *filename, void **datap, size_t *sizep)
-{
-	char fnbuf[128];
-	FILE *fp = NULL;
-	char *buf = NULL, *newbuf;
-	size_t size, alloc, newalloc, amt;
-	int err;
-
-	StringPrintf(fnbuf, sizeof(fnbuf), "convert/%s", filename);
-
-	fp = fopen(fnbuf, "rb");
-	if (fp == NULL) {
-		err = errno;
-		goto error;
-	}
-	buf = malloc(kInitialBufSize);
-	if (buf == NULL) {
-		err = errno;
-		goto error;
-	}
-	size = 0;
-	alloc = kInitialBufSize;
-	for (;;) {
-		if (size >= alloc) {
-			newalloc = alloc * 2;
-			newbuf = realloc(buf, newalloc);
-			if (newbuf == NULL) {
-				err = errno;
-				goto error;
-			}
-			alloc = newalloc;
-			buf = newbuf;
-		}
-		amt = fread(buf + size, 1, alloc - size, fp);
-		if (amt == 0) {
-			if (feof(fp)) {
-				break;
-			}
-			err = errno;
-			goto error;
-		}
-		size += amt;
-	}
-	fclose(fp);
-	*datap = buf;
-	*sizep = size;
-	return;
-
-error:
-	if (fp != NULL) {
-		fclose(fp);
-	}
-	if (buf != NULL) {
-		free(buf);
-	}
-	DieErrorf(err, "read %s", filename);
 }
 
 static UInt8 *gBuffer[3];
@@ -203,10 +145,8 @@ static const char *const kLineBreakData[4] = {
 
 static const char *const kLineBreakName[4] = {"keep", "LF", "CR", "CRLF"};
 
-static void TestConverter(const char *filename)
+static void TestConverter(const char *name, struct CharmapData data)
 {
-	void *data;
-	size_t datasz;
 	Ptr datap;
 	Handle datah;
 	struct Converter cf, cr, cc;
@@ -218,24 +158,22 @@ static void TestConverter(const char *filename)
 	UInt8 *optr, *oend;
 	int lblen[4];
 
-	data = NULL;
 	cf.data = NULL;
 	cr.data = NULL;
 
-	StringPrintf(gTestName, sizeof(gTestName), "%s", filename);
+	StringPrintf(gTestName, sizeof(gTestName), "%s", name);
 
 	/* Load the converter into memory and build the conversion table. */
-	ReadFile(filename, &data, &datasz);
-	datap = data;
+	datap = (void *)data.ptr;
 	datah = &datap;
-	r = ConverterBuild(&cf, datah, datasz, kToUTF8, &err);
+	r = ConverterBuild(&cf, datah, data.size, kToUTF8, &err);
 	if (r != 0) {
-		Failf("ConverterBuild: %s (to UTF-8): %s", filename, ErrorName(r));
+		Failf("ConverterBuild: to UTF-8: %s", ErrorName(r));
 		goto done;
 	}
-	r = ConverterBuild(&cr, datah, datasz, kFromUTF8, &err);
+	r = ConverterBuild(&cr, datah, data.size, kFromUTF8, &err);
 	if (r != 0) {
-		Failf("ConverterBuild: %s (from UTF-8): %s", filename, ErrorName(r));
+		Failf("ConverterBuild: from UTF-8: %s", ErrorName(r));
 		goto done;
 	}
 
@@ -269,7 +207,7 @@ static void TestConverter(const char *filename)
 		}
 		for (j = 1; j <= jmax; j++) {
 			StringPrintf(gTestName, sizeof(gTestName), "%s reverse i=%d j=%d",
-			             filename, i, j);
+			             name, i, j);
 			st.data = 0;
 			iptr = gBuffer[1];
 			optr = gBuffer[2];
@@ -300,7 +238,7 @@ static void TestConverter(const char *filename)
 			len0 = lblen[i]; /* Expected output */
 			for (j = 1; j < len1; j++) {
 				StringPrintf(gTestName, sizeof(gTestName),
-				             "%s %s linebreak %s split=%d", filename,
+				             "%s %s linebreak %s split=%d", name,
 				             k == 0 ? "forward" : "backward", kLineBreakName[i],
 				             j);
 				st.data = 0;
@@ -323,7 +261,6 @@ static void TestConverter(const char *filename)
 	}
 
 done:
-	free(data);
 	if (cf.data != NULL) {
 		DisposeHandle(cf.data);
 	}
@@ -335,7 +272,8 @@ done:
 int main(int argc, char **argv)
 {
 	void *buf;
-	const char *filename;
+	struct CharmapData data;
+	const char *name;
 	int i;
 
 	(void)argc;
@@ -350,16 +288,24 @@ int main(int argc, char **argv)
 	}
 
 	for (i = 0;; i++) {
-		filename = kCharsetFilename[i];
-		if (filename == NULL) {
+		name = CharmapName(i);
+		if (name == NULL) {
 			break;
 		}
-		TestConverter(filename);
+		data = CharmapData(i);
+		if (data.ptr != NULL) {
+			TestConverter(name, data);
+		}
 	}
 
 	for (i = 0; i < 3; i++) {
 		free(gBuffer[i]);
 	}
 
-	return gFailCount == 0 ? 0 : 1;
+	if (gFailCount > 0) {
+		fputs("failed\n", stderr);
+		return 1;
+	}
+	fputs("ok\n", stderr);
+	return 0;
 }
