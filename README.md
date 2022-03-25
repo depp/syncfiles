@@ -1,70 +1,26 @@
 # SyncFiles
 
-SyncFiles is a tool for MPW (Macintosh Programmer’s Workshop) which synchronizes files between a Macintosh and Unix system. It is used to copy files between a classic Macintosh development environment (e.g. MPW running on Mac System 7) and a modern Unix environment (e.g. a Basilisk II host system or an AppleShare volume).
+SyncFiles is being written, it is currently unusable.
 
-## What SyncFiles Does
+SyncFiles is a tool which synchronizes files between classic Mac OS systems and modern systems. You can use it to copy files between a classic Macintosh development environment (e.g. MPW or CodeWarrior running on Mac System 7) and a modern Unix environment (e.g. a Basilisk II host system or AppleShare volume). SyncFiles will convert line endings, convert character encodings, preserve resource forks, and set file type and creator codes.
 
-- By default, only copies files which are _newer_ than the destination file (unless `-force` is specified). This means that your classic Macintosh’s system should have the clock set correctly!
+## Sharing Files
 
-- Sets the modification timestamp of the destination file to match the timestamp of the source file.
+You still have to figure out how to transfer files.
 
-- Only synchronizes files which match hard-coded patterns.
+- Networked Macs running Mac OS 9 or earlier: Use [Netatalk][netatalk] to run a AFP file server on a different computer on the network. Connect to the file server using the Chooser. Use SyncFiles to transfer files between the local hard drive and the file server. Note that Netatalk may require special configuration in order to work with old Macs.
 
-- Converts text files to UTF-8 and LF line endings for Unix systems; converts to Mac OS Roman and CR line endings for Macintosh systems. XML files are not re-encoded.
+- Networked Macs running Mac OS X: In addition to using AFP, you can also use a Samba file server. This will be easier to set up than Netatalk. Use SyncFiles to transfer files between the local hard drive and the file server. There is a command-line version of SyncFiles for Mac OS X.
 
-- For resource files, converts by copying the Macintosh resource fork to the data fork.
+- [Basilisk II][basiliskii] or [SheepShaver][sheepshaver] virtual machines: Use SyncFiles to transfer files between the VM and the host using the “host directory tree”. This requires either running Mac OS 7.6 or an older version of Mac OS with the “File System Manager 1.2” extension.
 
-- Sets the file type and creator code, creating MPW Shell text files and ResEdit resource files.
+- Other virtual machines: [Mini vMac][minivmac], [QEMU][qemu]: Unknown.
 
-## File Patterns
-
-Copies files named Makefile, and files with the following extensions:
-
-- C: `.c` `.h`
-
-- C++: `.cc` `.cp` `.cpp` `.cxx` `.hh` `.hpp` `.hxx`
-
-- Plain text: `.txt`
-
-- Resource: `.rsrc`
-
-- XML: `.xml` (CR-LF conversion only, no encoding conversion)
-
-## Usage
-
-Operates in push or pull mode. The tool runs from inside the classic Macintosh environment, so the “push” mode copies from Macintosh to Unix, and the “pull” mode copies from Unix to Macintosh. It is assumed that the Macintosh directory is on a normal disk volume.
-
-### Basic Usage
-
-To push files from the current directory,
-
-```
-SyncFiles <DestPath> -push
-```
-
-To pull files from the current directory,
-
-```
-SyncFiles <DestPath> -pull
-```
-
-### Other Flags
-
-- `-verbose`: Print lots of boring messages.
-
-- `-quiet`: Print only errors and warnings.
-
-- `-force`: Ignore timestamps, copy all source files to destination.
-
-- `-dry-run`: Perform no actions, just print out what would be done.
-
-- `-dir`: Specify an alternat Macintosh directory to push from or pull to. By default, pushes from and pulls to the current directory.
-
-- `-delete`: Delete files in destination which are missing from source.
-
-## Testing
-
-Run `sh test.sh` to test the text conversion code.
+[netatalk]: https://netatalk.sourceforge.io/
+[basiliskii]: https://basilisk.cebix.net/
+[sheepshaver]: https://sheepshaver.cebix.net/
+[minivmac]: https://www.gryphel.com/c/minivmac/
+[qemu]: https://www.qemu.org/
 
 ## License
 
