@@ -1,12 +1,58 @@
-#ifndef defs_h
-#define defs_h
+#ifndef lib_defs_h
+#define lib_defs_h
 /* defs.h - common definitions. */
 
 /*==============================================================================
-Basic definitions
+Target information
 ==============================================================================*/
 
+/*
+  Note that this code does not need to be especially portable. It just runs on
+  Mac OS and development systems (for testing). We can assume that the
+  development system has GCC.
+
+  Macros we care about:
+
+  TARGET_OS_MAC             OS is some Macintosh variant (broadly speaking)
+  TARGET_API_MAC_OS8        Targeting classic Mac OS (9.x and earlier)
+
+  TARGET_RT_LITTLE_ENDIAN   Little-endian byte order
+  TARGET_RT_BIG_ENDIAN      Big-endian byte order
+*/
 #if macintosh
+
+/* Classic Mac OS. Header is part of Universal Interfaces & Carbon. */
+#include <ConditionalMacros.h>
+
+#elif __APPLE__
+
+/* Newer apple systems, including macOS >= 10. Header is in /usr/include, or
+   within /usr/include inside the SDK. */
+#include <TargetConditionals.h>
+
+#else
+
+#if __BYTE_ORDER__
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define TARGET_RT_LITTLE_ENDIAN 1
+#define TARGET_RT_BIG_ENDIAN 0
+#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define TARGET_RT_LITTLE_ENDIAN 0
+#define TARGET_RT_BIG_ENDIAN 1
+#else
+#error "unknown endian"
+#endif
+#else
+#error "could not determine byte order"
+#endif
+
+#endif
+
+/*==============================================================================
+Basic types
+==============================================================================*/
+
+#if TARGET_API_MAC_OS8
 
 #include <MacTypes.h>
 
@@ -65,7 +111,7 @@ typedef enum
 Memory allocation
 ==============================================================================*/
 
-#if macintosh
+#if TARGET_API_MAC_OS8
 
 #include <MacMemory.h>
 
