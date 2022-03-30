@@ -41,6 +41,7 @@ cc_library(
 
 cc_test(
     name = "convert_test",
+    size = "small",
     srcs = [
         "convert_test.c",
     ],

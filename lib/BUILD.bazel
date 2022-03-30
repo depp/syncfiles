@@ -34,6 +34,7 @@ cc_library(
 
 cc_test(
     name = "endian_test",
+    size = "small",
     srcs = [
         "endian_test.c",
     ],
