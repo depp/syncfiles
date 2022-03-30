@@ -104,7 +104,10 @@ typedef enum
 	kErrorNoMemory,
 
 	/* Invaild table data. */
-	kErrorBadData
+	kErrorBadData,
+
+	/* Too many files in one directory. */
+	kErrorDirectoryTooLarge
 } ErrorCode;
 
 /*==============================================================================
@@ -130,5 +133,15 @@ Boolean ResizeHandle(Handle h, Size newSize);
 
 /* Fill memory with zeroes. */
 void MemClear(void *ptr, Size size);
+
+/*==============================================================================
+Assertions
+==============================================================================*/
+
+#if NDEBUG
+#define assert(x) ((void)0)
+#else
+#include <assert.h>
+#endif
 
 #endif

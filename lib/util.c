@@ -15,7 +15,12 @@ void Fatalf(const char *msg, ...)
 	exit(1);
 }
 
-static const char *const kErrorNames[] = {"ok", "no memory", "bad data"};
+static const char *const kErrorNames[] = {
+	"ok",
+	"no memory",
+	"bad data",
+	"too many files in one directory",
+};
 
 const char *ErrorDescription(ErrorCode err)
 {

@@ -1,0 +1,32 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("//bazel:copts.bzl", "COPTS")
+
+cc_library(
+    name = "tree",
+    srcs = [
+        "tree.c",
+    ],
+    hdrs = [
+        "meta.h",
+        "tree.h",
+    ],
+    copts = COPTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        "//lib",
+    ],
+)
+
+cc_test(
+    name = "tree_test",
+    size = "small",
+    srcs = [
+        "tree_test.c",
+    ],
+    copts = COPTS,
+    deps = [
+        ":tree",
+        "//lib",
+        "//lib:test",
+    ],
+)
