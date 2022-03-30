@@ -1,12 +1,8 @@
-/* Converter test. */
-#define _XOPEN_SOURCE 500
-
 #include "convert/convert.h"
 #include "convert/data.h"
 #include "lib/test.h"
+#include "lib/util.h"
 
-#include <errno.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,55 +12,6 @@ enum
 	kInitialBufSize = 4 * 1024,
 	kConvertBufferSize = 1024
 };
-
-static int gFailCount;
-static char gTestName[128];
-
-static void Failf(const char *msg, ...) __attribute__((format(printf, 1, 2)));
-
-static void Failf(const char *msg, ...)
-{
-	va_list ap;
-
-	gFailCount++;
-	fputs("Error: ", stderr);
-	fputs(gTestName, stderr);
-	fputs(": ", stderr);
-	va_start(ap, msg);
-	vfprintf(stderr, msg, ap);
-	va_end(ap);
-	fputc('\n', stderr);
-	if (gFailCount >= 10) {
-		exit(1);
-	}
-}
-
-static const char *const kErrorNames[] = {"ok", "no memory", "bad data"};
-
-static const char *ErrorName(ErrorCode err)
-{
-	if (err < 0 || (int)(sizeof(kErrorNames) / sizeof(*kErrorNames)) <= err) {
-		Dief("bad error code: %d", err);
-	}
-	return kErrorNames[err];
-}
-
-static void StringPrintf(char *dest, size_t destsz, const char *fmt, ...)
-	__attribute__((format(printf, 3, 4)));
-
-static void StringPrintf(char *dest, size_t destsz, const char *fmt, ...)
-{
-	va_list ap;
-	int n;
-
-	va_start(ap, fmt);
-	n = vsnprintf(dest, destsz, fmt, ap);
-	va_end(ap);
-
-	if (n < 0 || n >= (int)destsz) {
-		Dief("snprintf: overflow");
-	}
-}
 
 static UInt8 *gBuffer[3];
 
@@ -161,19 +108,19 @@ static void TestConverter(const char *name, struct CharmapData data)
 	cf.data = NULL;
 	cr.data = NULL;
 
-	StringPrintf(gTestName, sizeof(gTestName), "%s", name);
+	SetTestNamef(name);
 
 	/* Load the converter into memory and build the conversion table. */
 	datap = (void *)data.ptr;
 	datah = &datap;
 	err = ConverterBuild(&cf, datah, data.size, kToUTF8);
 	if (err != 0) {
-		Failf("ConverterBuild: to UTF-8: %s", ErrorName(err));
+		Failf("ConverterBuild: to UTF-8: %s", ErrorDescriptionOrDie(err));
 		goto done;
 	}
 	err = ConverterBuild(&cr, datah, data.size, kFromUTF8);
 	if (err != 0) {
-		Failf("ConverterBuild: from UTF-8: %s", ErrorName(err));
+		Failf("ConverterBuild: from UTF-8: %s", ErrorDescriptionOrDie(err));
 		goto done;
 	}
 
@@ -206,8 +153,7 @@ static void TestConverter(const char *name, struct CharmapData data)
 			jmax = 4;
 		}
 		for (j = 1; j <= jmax; j++) {
-			StringPrintf(gTestName, sizeof(gTestName), "%s reverse i=%d j=%d",
-			             name, i, j);
+			SetTestNamef("%s reverse i=%d j=%d", name, i, j);
 			st.data = 0;
 			iptr = gBuffer[1];
 			optr = gBuffer[2];
@@ -237,8 +183,7 @@ static void TestConverter(const char *name, struct CharmapData data)
 			len1 = lblen[0]; /* Input data */
 			len0 = lblen[i]; /* Expected output */
 			for (j = 1; j < len1; j++) {
-				StringPrintf(gTestName, sizeof(gTestName),
-				             "%s %s linebreak %s split=%d", name,
+				SetTestNamef("%s %s linebreak %s split=%d", name,
 				             k == 0 ? "forward" : "backward", kLineBreakName[i],
 				             j);
 				st.data = 0;
@@ -282,7 +227,7 @@ int main(int argc, char **argv)
 	for (i = 0; i < 3; i++) {
 		buf = malloc(kConvertBufferSize);
 		if (buf == NULL) {
-			Dief("malloc failed");
+			Fatalf("malloc failed");
 		}
 		gBuffer[i] = buf;
 	}
@@ -302,10 +247,5 @@ int main(int argc, char **argv)
 		free(gBuffer[i]);
 	}
 
-	if (gFailCount > 0) {
-		fputs("failed\n", stderr);
-		return 1;
-	}
-	fputs("ok\n", stderr);
-	return 0;
+	return TestsDone();
 }

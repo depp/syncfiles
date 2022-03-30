@@ -5,14 +5,31 @@ cc_library(
     name = "lib",
     srcs = [
         "toolbox.c",
+        "util.c",
     ],
     hdrs = [
         "defs.h",
         "endian.h",
+        "util.h",
+    ],
+    copts = COPTS,
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "test",
+    testonly = True,
+    srcs = [
+        "test.c",
+    ],
+    hdrs = [
         "test.h",
     ],
     copts = COPTS,
     visibility = ["//visibility:public"],
+    deps = [
+        ":lib",
+    ],
 )
 
 cc_test(
@@ -23,5 +40,6 @@ cc_test(
     copts = COPTS,
     deps = [
         ":lib",
+        ":test",
     ],
 )

@@ -4,23 +4,10 @@
    development easier. These are not intended to make it possible to port the
    converter to non-Mac OS systems. */
 #include "lib/defs.h"
-#include "lib/test.h"
+#include "lib/util.h"
 
-#include <stdarg.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-void Dief(const char *msg, ...)
-{
-	va_list ap;
-	fputs("Error: ", stderr);
-	va_start(ap, msg);
-	vfprintf(stderr, msg, ap);
-	va_end(ap);
-	fputc('\n', stderr);
-	exit(1);
-}
 
 Handle NewHandle(Size byteCount)
 {
@@ -28,7 +15,7 @@ Handle NewHandle(Size byteCount)
 	Handle h;
 
 	if (byteCount < 0) {
-		Dief("NewHandle: byteCount = %ld", byteCount);
+		Fatalf("NewHandle: byteCount = %ld", byteCount);
 	}
 	p = malloc(byteCount);
 	if (byteCount > 0 && p == NULL) {
@@ -55,10 +42,10 @@ Boolean ResizeHandle(Handle h, Size newSize)
 {
 	Ptr p;
 	if (h == NULL) {
-		Dief("ResizeHandle: h = NULL");
+		Fatalf("ResizeHandle: h = NULL");
 	}
 	if (newSize < 0) {
-		Dief("ResizeHandle: newSize = %ld", newSize);
+		Fatalf("ResizeHandle: newSize = %ld", newSize);
 	}
 	p = realloc(*h, newSize);
 	if (newSize > 0 && p == NULL) {

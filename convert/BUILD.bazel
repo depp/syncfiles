@@ -48,5 +48,6 @@ cc_test(
     deps = [
         ":convert",
         "//lib",
+        "//lib:test",
     ],
 )

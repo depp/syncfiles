@@ -4,11 +4,23 @@
 
 #include "lib/defs.h"
 
-/* Print an error message and exit. */
-void Dief(const char *msg, ...) __attribute__((noreturn, format(printf, 1, 2)));
+/* The number of test failures. */
+extern int gFailCount;
 
-/* Print an error message with an error code and exit. */
-void DieErrorf(int errcode, const char *msg, ...)
-	__attribute__((noreturn, format(printf, 2, 3)));
+/* Set the name of the current test. */
+void SetTestName(const char *name);
+
+/* Set the name of the current test. */
+void SetTestNamef(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
+
+/* Fail the current test. */
+void Failf(const char *msg, ...) __attribute__((format(printf, 1, 2)));
+
+/* Return the description of an error code. Fatal error if the error code is
+   invalid. */
+const char *ErrorDescriptionOrDie(ErrorCode err);
+
+/* Print information about completed tests and return the status code. */
+int TestsDone(void );
 
 #endif
