@@ -16,6 +16,15 @@
 		387404AF27F632930002AC61 /* charmap_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 38BF882C27ED6614006D75BF /* charmap_data.c */; };
 		387404B027F632960002AC61 /* charmap_info.c in Sources */ = {isa = PBXBuildFile; fileRef = 38BF882D27ED6614006D75BF /* charmap_info.c */; };
 		387404B527F632A20002AC61 /* convert.c in Sources */ = {isa = PBXBuildFile; fileRef = 3892E74D27EBFC0B00C0FC23 /* convert.c */; };
+		387404BF27F6334F0002AC61 /* endian_test.c in Sources */ = {isa = PBXBuildFile; fileRef = 3874048B27F631F00002AC61 /* endian_test.c */; };
+		387404C027F633500002AC61 /* test.c in Sources */ = {isa = PBXBuildFile; fileRef = 3874048C27F631F00002AC61 /* test.c */; };
+		387404C127F633510002AC61 /* toolbox.c in Sources */ = {isa = PBXBuildFile; fileRef = 3874048E27F631F00002AC61 /* toolbox.c */; };
+		387404C227F633520002AC61 /* util.c in Sources */ = {isa = PBXBuildFile; fileRef = 3874048F27F631F00002AC61 /* util.c */; };
+		387404D727F633A70002AC61 /* tree.c in Sources */ = {isa = PBXBuildFile; fileRef = 387404CD27F6337E0002AC61 /* tree.c */; };
+		387404D827F633A70002AC61 /* tree_test.c in Sources */ = {isa = PBXBuildFile; fileRef = 387404CF27F6337E0002AC61 /* tree_test.c */; };
+		387404DA27F633AA0002AC61 /* test.c in Sources */ = {isa = PBXBuildFile; fileRef = 3874048C27F631F00002AC61 /* test.c */; };
+		387404DB27F633AB0002AC61 /* toolbox.c in Sources */ = {isa = PBXBuildFile; fileRef = 3874048E27F631F00002AC61 /* toolbox.c */; };
+		387404DC27F633AC0002AC61 /* util.c in Sources */ = {isa = PBXBuildFile; fileRef = 3874048F27F631F00002AC61 /* util.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +37,12 @@
 		3874048F27F631F00002AC61 /* util.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = util.c; sourceTree = "<group>"; };
 		3874049027F631F00002AC61 /* util.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = util.h; sourceTree = "<group>"; };
 		3874049827F6320F0002AC61 /* convert_test */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "compiled.mach-o.executable"; path = convert_test; sourceTree = BUILT_PRODUCTS_DIR; };
+		387404BD27F633430002AC61 /* endian_test */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "compiled.mach-o.executable"; name = endian_test; path = build/Release/endian_test; sourceTree = "<group>"; };
+		387404CC27F6337E0002AC61 /* meta.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = meta.h; sourceTree = "<group>"; };
+		387404CD27F6337E0002AC61 /* tree.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = tree.c; sourceTree = "<group>"; };
+		387404CE27F6337E0002AC61 /* tree.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = tree.h; sourceTree = "<group>"; };
+		387404CF27F6337E0002AC61 /* tree_test.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = tree_test.c; sourceTree = "<group>"; };
+		387404D327F633940002AC61 /* tree_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = tree_test; path = build/Release/tree_test; sourceTree = "<group>"; };
 		3892E74D27EBFC0B00C0FC23 /* convert.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = convert.c; sourceTree = "<group>"; };
 		3892E74E27EBFC0B00C0FC23 /* convert.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = convert.h; sourceTree = "<group>"; };
 		3892E74F27EBFC0B00C0FC23 /* convert_1f.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = convert_1f.c; sourceTree = "<group>"; };
@@ -42,6 +57,20 @@
 
 /* Begin PBXFrameworksBuildPhase section */
 		3874049627F6320F0002AC61 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		387404BB27F633430002AC61 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		387404D127F633940002AC61 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -66,11 +95,23 @@
 			path = lib;
 			sourceTree = "<group>";
 		};
+		387404CA27F6337E0002AC61 /* sync */ = {
+			isa = PBXGroup;
+			children = (
+				387404CC27F6337E0002AC61 /* meta.h */,
+				387404CD27F6337E0002AC61 /* tree.c */,
+				387404CE27F6337E0002AC61 /* tree.h */,
+				387404CF27F6337E0002AC61 /* tree_test.c */,
+			);
+			path = sync;
+			sourceTree = "<group>";
+		};
 		3892E72D27EBDB6E00C0FC23 = {
 			isa = PBXGroup;
 			children = (
 				3892E74B27EBFC0B00C0FC23 /* convert */,
 				3874048727F631F00002AC61 /* lib */,
+				387404CA27F6337E0002AC61 /* sync */,
 				3892E74127EBDBCB00C0FC23 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -79,6 +120,8 @@
 			isa = PBXGroup;
 			children = (
 				3874049827F6320F0002AC61 /* convert_test */,
+				387404BD27F633430002AC61 /* endian_test */,
+				387404D327F633940002AC61 /* tree_test */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -119,6 +162,38 @@
 			productReference = 3874049827F6320F0002AC61 /* convert_test */;
 			productType = "com.apple.product-type.tool";
 		};
+		387404BC27F633430002AC61 /* endian_test */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 387404C727F633550002AC61 /* Build configuration list for PBXNativeTarget "endian_test" */;
+			buildPhases = (
+				387404BA27F633430002AC61 /* Sources */,
+				387404BB27F633430002AC61 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = endian_test;
+			productName = endian_test;
+			productReference = 387404BD27F633430002AC61 /* endian_test */;
+			productType = "com.apple.product-type.tool";
+		};
+		387404D227F633940002AC61 /* tree_test */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 387404E127F633B00002AC61 /* Build configuration list for PBXNativeTarget "tree_test" */;
+			buildPhases = (
+				387404D027F633940002AC61 /* Sources */,
+				387404D127F633940002AC61 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = tree_test;
+			productName = tree_test;
+			productReference = 387404D327F633940002AC61 /* tree_test */;
+			productType = "com.apple.product-type.tool";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -131,6 +206,8 @@
 			projectDirPath = "";
 			targets = (
 				3874049727F6320F0002AC61 /* convert_test */,
+				387404BC27F633430002AC61 /* endian_test */,
+				387404D227F633940002AC61 /* tree_test */,
 			);
 		};
 /* End PBXProject section */
@@ -149,6 +226,29 @@
 				387404AF27F632930002AC61 /* charmap_data.c in Sources */,
 				387404B027F632960002AC61 /* charmap_info.c in Sources */,
 				387404B527F632A20002AC61 /* convert.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		387404BA27F633430002AC61 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				387404BF27F6334F0002AC61 /* endian_test.c in Sources */,
+				387404C027F633500002AC61 /* test.c in Sources */,
+				387404C127F633510002AC61 /* toolbox.c in Sources */,
+				387404C227F633520002AC61 /* util.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		387404D027F633940002AC61 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				387404D727F633A70002AC61 /* tree.c in Sources */,
+				387404D827F633A70002AC61 /* tree_test.c in Sources */,
+				387404DA27F633AA0002AC61 /* test.c in Sources */,
+				387404DB27F633AB0002AC61 /* toolbox.c in Sources */,
+				387404DC27F633AC0002AC61 /* util.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -185,6 +285,66 @@
 			};
 			name = Release;
 		};
+		387404C827F633550002AC61 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				INSTALL_PATH = "$(HOME)/bin";
+				PREBINDING = NO;
+				PRODUCT_NAME = endian_test;
+				ZERO_LINK = YES;
+			};
+			name = Debug;
+		};
+		387404C927F633550002AC61 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = "$(HOME)/bin";
+				PREBINDING = NO;
+				PRODUCT_NAME = endian_test;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		387404E227F633B00002AC61 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				INSTALL_PATH = "$(HOME)/bin";
+				PREBINDING = NO;
+				PRODUCT_NAME = tree_test;
+				ZERO_LINK = YES;
+			};
+			name = Debug;
+		};
+		387404E327F633B00002AC61 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = "$(HOME)/bin";
+				PREBINDING = NO;
+				PRODUCT_NAME = tree_test;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
 		3892E73127EBDB6F00C0FC23 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -209,6 +369,24 @@
 			buildConfigurations = (
 				3874049B27F6322C0002AC61 /* Debug */,
 				3874049C27F6322C0002AC61 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		387404C727F633550002AC61 /* Build configuration list for PBXNativeTarget "endian_test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				387404C827F633550002AC61 /* Debug */,
+				387404C927F633550002AC61 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		387404E127F633B00002AC61 /* Build configuration list for PBXNativeTarget "tree_test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				387404E227F633B00002AC61 /* Debug */,
+				387404E327F633B00002AC61 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
