@@ -51,9 +51,6 @@ struct Metadata {
 	struct Timestamp mod_time;
 };
 
-/* A reference to a file node by index, or 0 for none. */
-typedef int FileRef;
-
 /* Information about a local and remote file or directory. */
 struct FileRec {
 	FileName name[2];
