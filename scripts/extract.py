@@ -12,9 +12,11 @@ def list_enums(filename: str) -> Iterator[Item]:
     """List enum definitions in a file."""
     with open(filename, 'rb') as fp:
         data = fp.read()
-    for item in re.finditer(rb'^\s*(\w+)\s*=\s*(\d+)', data, re.MULTILINE):
+    for item in re.finditer(
+            rb'^\s*(\w+)\s*=\s*((?:0x)?\d+)u?l?\b',
+            data, re.MULTILINE | re.IGNORECASE):
         name, value = item.groups()
-        yield name.decode('ASCII'), int(value)
+        yield name.decode('ASCII'), int(value, 0)
 
 def index_of(data: List[Item], key: str) -> int:
     for i, (name, _) in enumerate(data):
@@ -49,9 +51,7 @@ def process_textcommon(filename: str) -> None:
     for name, value in list_enums(filename):
         if name.startswith('kTextEncoding'):
             encodings.append((name, value))
-    write_csv('encoding.csv',
-              slice(encodings, 'kTextEncodingMacRoman',
-                    'kTextEncodingMacKeyboardGlyphs'))
+    write_csv('encoding.csv', encodings)
 
 def process(filename: str) -> None:
     name = os.path.basename(filename).lower()
