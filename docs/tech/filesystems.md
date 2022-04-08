@@ -34,7 +34,7 @@ Filenames are stored in UTF-16, decomposed using the rules from Unicode 2.1 (up 
 
 See [Apple Technical Note TN1150: HFS Plus Volume Format][tn1150].
 
-[tn1105]: https://developer.apple.com/library/archive/technotes/tn/tn1150.html
+[tn1150]: https://developer.apple.com/library/archive/technotes/tn/tn1150.html
 
 There is a variant of HFS Plus called HFSX. The major difference between normal HFS Plus and HFSX is that HFSX does not carry an HFS wrapper for backwards compatibility with systems that do not support HFS Plus.
 
