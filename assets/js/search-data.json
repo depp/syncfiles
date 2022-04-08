@@ -2,175 +2,175 @@
     "doc": "File APIs",
     "title": "File APIs",
     "content": "Mac OS filesystem APIs evolved as the underlying filesystem semantics changed. ",
-    "url": "/syncfiles//https://depp.github.io/tech/apis",
+    "url": "https://depp.github.io/syncfiles/tech/apis",
     "relUrl": "/tech/apis"
   },"1": {
     "doc": "File APIs",
     "title": "Pascal Strings",
     "content": "Prior to Mac OS X, Macintosh APIs used Pascal strings to represent strings. Pascal strings are passed by pointer. The first byte pointed to stores the string length, and the string contents follows. Pascal strings are not null-terminated and not compatible with C-style strings. Note that since the string length is stored in a single byte, these strings cannot be longer than 255 bytes. Compilers for Mac OS support Pascal strings by putting the \\p sequence at the beginning of a string. For example, . const unsigned char kFilename[] = \"\\pMy File\"; . This is equivalent to: . const unsigned char kFilename[8] = { 7, 'M', 'y', ' ', 'F', 'i', 'l', 'e' }; . Pascal strings are encoded using one of the old Macintosh character encodings, such as Mac OS Roman. In some cases, the encoding is assumed to be the system’s encoding, whatever that is. In other cases, the encoding is explicitly specified using a ScriptCode (although this value is somewhat ambiguous). In other cases still, the actual encoding is ignored and the string is treated as if it were encoded using the Mac OS Roman encoding. ",
-    "url": "/syncfiles//https://depp.github.io/tech/apis#pascal-strings",
+    "url": "https://depp.github.io/syncfiles/tech/apis#pascal-strings",
     "relUrl": "/tech/apis#pascal-strings"
   },"2": {
     "doc": "File APIs",
     "title": "Early Mac OS",
     "content": "The filesystem on the very first Macintosh, later called the Mac 128K, did not support folders or directories. Each file was identified by volume ID and name. For example, OpenDF opens the data fork of a file (presumably, DF stands for “data fork”—there is a corresponding OpenRF for the resource fork), and Create creates a new file. OSErr OpenDF( const unsigned char * fileName, short vRefNum, short * refNum); OSErr Create( const unsigned char * fileName, short vRefNum, OSType creator, OSType fileType); . Filenames have a maximum length of 63 characters and are case insensitive. Systems from this era did not support multiple character encodings, so the encoding did not need to be specified. Note that the 63-character limit is an API limit, and common filesystems have a lower, 31-character limit. You should not be using this API unless you are targeting extremely old Macintosh systems, like the Mac 128K. This API became obsolete with the introduction of 128K ROMs with the Mac Plus in 1986. This API is not part of Carbon and cannot be used on Mac OS X. Swapping Floppy Disks . During this era, it was common to swap floppy disks while a program was running. You can run a program from one disk and save files on another disk. When a program tries to access a file that’s on a different disk, the operating system ejects the current disk and prompts the user to insert the correct disk. This happens automatically; programs do not need to include any code to make this possible. Compatibility with HFS . Old applications written to use this API continue to work after files after the introduction of the hierarchical filesystem. The way this happens is through something called working directories. A working directory is the combination of a volume ID and a directory ID, and it can be used in place of a volume ID in the filesystem API. The intent is that old code which only uses volume IDs can be used to save files in different locations on the filesystem. For example, if an old application creates a “save file” dialog box, instead of a volume ID, the dialog box returns a working directory pointing to the directory where the user chose to save the file. ",
-    "url": "/syncfiles//https://depp.github.io/tech/apis#early-mac-os",
+    "url": "https://depp.github.io/syncfiles/tech/apis#early-mac-os",
     "relUrl": "/tech/apis#early-mac-os"
   },"3": {
     "doc": "File APIs",
     "title": "Hierarchical API",
     "content": "Alongside Apple’s first hard disk for the Macintosh, the operating system introduced a new filesystem (HFS) which supported directories, and this required a new API. Instead of OpenDF, programs now call HOpenDF to the data fork of a file, and call HCreate instead of Create. Presumably, “H” stands for “hierarchical”. OSErr HOpenDF( short vRefNum, long dirID, const unsigned char * fileName, SInt8 permission, short * refNum); OSErr HCreate( short vRefNum, long dirID, const unsigned char * fileName, OSType creator, OSType fileType); . In this API, files are identified by volume ID, the directory ID within that volume, and the filename within that directory. The encoding is not specified, and presumably, files will be created using the system’s default character encoding. ",
-    "url": "/syncfiles//https://depp.github.io/tech/apis#hierarchical-api",
+    "url": "https://depp.github.io/syncfiles/tech/apis#hierarchical-api",
     "relUrl": "/tech/apis#hierarchical-api"
   },"4": {
     "doc": "File APIs",
     "title": "FSSpec API",
     "content": "The FSSpec API does not change semantics, but provides a simple data structure which is used to store the volume ID, directory ID, and filename. This structure is called FSSpec. struct FSSpec { short vRefNum; long parID; unsigned char name[64]; }; . Functions which use an FSSpec are named with the FSp prefix. These functions are preferred for over the previous versions for their simplicity. For example, FSpOpenDF, which opens a file’s data fork, and FSpCreate, which creates a new file: . OSErr FSpOpenDF( const FSSpec * spec, SInt8 permission, short * refNum); OSErr FSpCreate( const FSSpec * spec, OSType creator, OSType fileType, ScriptCode scriptTag); . Note that the character encoding is specified when creating a file, using the scriptTag parameter (although technically, this does not completely specify an encoding). The character encoding is not specified when opening a file, instead, the encoding is ignored and treated as if it were the Mac OS Roman encoding. This API preserves the encoding used for filenames, but you only need the correct bytestring to refer to existing files. Starting in Mac OS X 10.4, this API and other APIs before it are marked as deprecated. ",
-    "url": "/syncfiles//https://depp.github.io/tech/apis#fsspec-api",
+    "url": "https://depp.github.io/syncfiles/tech/apis#fsspec-api",
     "relUrl": "/tech/apis#fsspec-api"
   },"5": {
     "doc": "File APIs",
     "title": "FSRef API",
     "content": "Mac OS 9 introduces a new opaque alternative to FSSpec called FSRef. You can use an FSRef to refer to an existing file, but there is no way to get any information from an FSRef without invoking the filesystem API. The FSRef is not a drop-in replacement for FSSpec, beceause a FSRef must refer to an existing file, and therefore, cannot be used to create a new file. struct FSRef { UInt8 hidden[80]; }; . The FSRef structure is private to an application and cannot be assumed to be valid if the file is moved/renamed, if the volume is unmounted and remounted, or if the structure is passed to another process. We can speculate that the FSRef structure contains information about a file like its filesystem inode, which can be used to look up the file name. You can convert an FSSpec to an FSRef, although this will fail if the file does not exist: . OSErr FSpMakeFSRef( const FSSpec * source, FSRef * newRef); . The FSRef API has some other differences. For example, when you open a file, you specify the name of the fork you want to open. Previous APIs used different functions for opening the data fork and the resource fork. File names are now specified as Unicode strings encoded with UTF-16. OSErr FSOpenFork( const FSRef * ref, UniCharCount forkNameLength, const UniChar * forkName, SInt8 permissions, SInt16 * forkRefNum); OSErr FSCreateFileUnicode( const FSRef * parentRef, UniCharCount nameLength, const UniChar * name, FSCatalogInfoBitmap whichInfo, const FSCatalogInfo * catalogInfo, FSRef * newRef, FSSpec * newSpec); . This API is a part of Carbon. Carbon was never ported to 64-bit architectures, and was deprecated in Mac OS X 10.8. The last version that supports this API is macOS 10.14, which is the last version of macOS that supports 32-bit programs. ",
-    "url": "/syncfiles//https://depp.github.io/tech/apis#fsref-api",
+    "url": "https://depp.github.io/syncfiles/tech/apis#fsref-api",
     "relUrl": "/tech/apis#fsref-api"
   },"6": {
     "doc": "File APIs",
     "title": "Unix API",
     "content": "Mac OS X brought us the Unix APIs: . int open( const char * pathname, int flags, ...); int openat( int fd, const char * pathname, int flags, ...); . The openat call is available from Mac OS 10.10 onwards. Strings are now null-terminated C strings, which are interpreted as UTF-8. Mac OS filesystems do not support arbitrary bytestrings as filenames. If you try to create a file with open with a filename that is not supported by the filesystem, the system call will fail and set errno to EILSEQ (92). This is not documented in the man page for open. Forks on Unix . The resource fork can be accessed as if it were a separate file. To access the resource fork, append /rsrc or /..namedfork/rsrc to the file path. This allows you to view resource fork data through ordinary Unix APIs or with Unix command-line utilities like hexdump and ls. Linux also allows you to access the resource fork by appending /rsrc to the file path, for filesystems that support resource forks. Extended Attributes . Starting in version 10.4, Mac OS X provides an interface for accessing extended attributes on a file. ssize_t getxattr( const char * path, const char * name, void * value, size_t size, u_int32_t position, int options); . The resource fork is presented as an extended attribute with the name com.apple.ResourceFork. Since resource forks can be as much as 16 MiB in size, the getxattr function provides a way to read portions of the resource fork without having to read the entire fork. Finder info is contained in an attribute named com.apple.FinderInfo. ",
-    "url": "/syncfiles//https://depp.github.io/tech/apis#unix-api",
+    "url": "https://depp.github.io/syncfiles/tech/apis#unix-api",
     "relUrl": "/tech/apis#unix-api"
   },"7": {
     "doc": "File APIs",
     "title": "Aliases and Bookmarks",
     "content": "Mac OS also provides facilities to store a reference to a file. These references are designed to be durable, and work even if the file is moved and renamed. These references work by containing various pieces of metadata about the file. If the file is moved, the metadata can be used to find it again. On older Mac OS systems, these records are called aliases and you can create them using the alias manager APIs, which are available starting in System 7. In Cocoa, these records are called bookmarks. The main use of aliases and bookmarks is to store references to files in the “recently used files” menu option in applications. ",
-    "url": "/syncfiles//https://depp.github.io/tech/apis#aliases-and-bookmarks",
+    "url": "https://depp.github.io/syncfiles/tech/apis#aliases-and-bookmarks",
     "relUrl": "/tech/apis#aliases-and-bookmarks"
   },"8": {
     "doc": "Filesystems",
     "title": "Filesystems",
     "content": "This document focuses on the different filesystems used by Mac OS over the years and how filenames work on these filesystems. ",
-    "url": "/syncfiles//https://depp.github.io/tech/filesystems",
+    "url": "https://depp.github.io/syncfiles/tech/filesystems",
     "relUrl": "/tech/filesystems"
   },"9": {
     "doc": "Filesystems",
     "title": "MFS",
     "content": "Macintosh file system (MFS) is Apple’s filesystem for the first Macintosh. MFS does not support directories and has a maximum filename length of 63 characters. According to Wikipedia, the final OS versions that supported MFS were 7.6 for read-write access and 8.0 for read-only access. It is unusual to see this filesystem in practice, since it was replaced by HFS shortly after it appeared. ",
-    "url": "/syncfiles//https://depp.github.io/tech/filesystems#mfs",
+    "url": "https://depp.github.io/syncfiles/tech/filesystems#mfs",
     "relUrl": "/tech/filesystems#mfs"
   },"10": {
     "doc": "Filesystems",
     "title": "HFS",
     "content": "Hierarchical file system (HFS) was introduced shortly after MFS and replaced MFS. It first appeared alongside Apple’s first Macintosh hard disk, the “Hard Disk 20” in 1985, and afterwards appeared in the 128K ROM on the Mac Plus. HFS introduces directories and a new set of file APIs. The final versions of Mac OS which support HFS are Mac OS X 10.5 Leopard for read-write access and macOS 10.14 Mojave for read-only access. HFS has a maximum filename length to 31 characters. The script used for the filename is recorded, but filenames are compared as if they are were encoded using the Macintosh Roman encoding. Filenames are case insensitive, and the sort order is described on page A-20 of Inside Macintosh: Text (1993). ",
-    "url": "/syncfiles//https://depp.github.io/tech/filesystems#hfs",
+    "url": "https://depp.github.io/syncfiles/tech/filesystems#hfs",
     "relUrl": "/tech/filesystems#hfs"
   },"11": {
     "doc": "Filesystems",
     "title": "HFS Plus",
     "content": "HFS Plus was introduced with Mac OS 8.1 and added support for filesystem journaling, Unicode filenames, up to 255 characters per filename, and case-sensitive filenames if enabled. Mac OS 8.1 was released in January 1998. To provide backwards compatibility with older APIs, HFS Plus records the encoding that filenames should be encoded with when listing files in the older APIs. The volume header tracks a list of all encodings used for all filenames on the volume, so the appropriate conversion tables can be loaded when the volume is mounted. When an application using an older API lists the files in a directory, it will see backwards-compatible filenames substituted for filenames that use unsupported characters or filenames that are too long. Filenames are stored in UTF-16, decomposed using the rules from Unicode 2.1 (up to Mac OS X 10.2) or Unicode 3.2 (for Mac OS X 10.3 and later). See [Apple Technical Note TN1150: HFS Plus Volume Format][tn1150]. There is a variant of HFS Plus called HFSX. The major difference between normal HFS Plus and HFSX is that HFSX does not carry an HFS wrapper for backwards compatibility with systems that do not support HFS Plus. ",
-    "url": "/syncfiles//https://depp.github.io/tech/filesystems#hfs-plus",
+    "url": "https://depp.github.io/syncfiles/tech/filesystems#hfs-plus",
     "relUrl": "/tech/filesystems#hfs-plus"
   },"12": {
     "doc": "Filesystems",
     "title": "APFS",
     "content": "APFS is introduced in macOS 10.12.4. Filenames are encoded using UTF-8. Only code points assigned in Unicode 9.0 are permitted in filenames. APFS does not normalize filenames, but does store files by using the hash of the normalized version of the filename. ",
-    "url": "/syncfiles//https://depp.github.io/tech/filesystems#apfs",
+    "url": "https://depp.github.io/syncfiles/tech/filesystems#apfs",
     "relUrl": "/tech/filesystems#apfs"
   },"13": {
     "doc": "Filesystems",
     "title": "UFS",
     "content": "UFS stands for Unix file system. It is a case-sensitive filesystem which is only supported by Mac OS X versions 10.0 through 10.5. UFS is not seen often. ",
-    "url": "/syncfiles//https://depp.github.io/tech/filesystems#ufs",
+    "url": "https://depp.github.io/syncfiles/tech/filesystems#ufs",
     "relUrl": "/tech/filesystems#ufs"
   },"14": {
     "doc": "Filesystems",
     "title": "Disk Images",
     "content": "There are various formats for disk images: Disc Copy 4.2 images, NDIF images, and UDIF images. ",
-    "url": "/syncfiles//https://depp.github.io/tech/filesystems#disk-images",
+    "url": "https://depp.github.io/syncfiles/tech/filesystems#disk-images",
     "relUrl": "/tech/filesystems#disk-images"
   },"15": {
     "doc": "Finder Info",
     "title": "Finder Info",
     "content": "Mac OS also stores a small piece of metadata for each file called Finder Info. As the name implies, this contains information which is primarily used by the Finder (Finder is the Mac OS shell, which shows the desktop and filesystem). For example, this includes the file’s type and its location on-screen. There are different versions of the Finder info structure. This is what one of the older versions looks like, for a file: . struct FileInfo { OSType fileType; OSType fileCreator; UInt16 finderFlags; Point location; UInt16 reservedField; }; . ",
-    "url": "/syncfiles//https://depp.github.io/tech/finder-info",
+    "url": "https://depp.github.io/syncfiles/tech/finder-info",
     "relUrl": "/tech/finder-info"
   },"16": {
     "doc": "Finder Info",
     "title": "Preservation",
     "content": "When transferring files to old Macintosh systems, it’s usually necessary to assign a correct type code for every file. It can be frustrating to work with files that do not have the correct type code, and you may not be able to open these files at all. There are various tools which can fix this problem. ResEdit can fix this problem, and there are some more specialized tools designed specifically to deal with this problem. ",
-    "url": "/syncfiles//https://depp.github.io/tech/finder-info#preservation",
+    "url": "https://depp.github.io/syncfiles/tech/finder-info#preservation",
     "relUrl": "/tech/finder-info#preservation"
   },"17": {
     "doc": "Finder Info",
     "title": "Type and Creator Codes",
     "content": "Older versions of Mac OS do not use filename suffixes to associate files with applications. You can use any name you like for a file, and the file type is given by the file’s type code. The application to open it is given by the file’s creator code. The type code is a four-character code used to describe the type of the file. For example, TEXT is used for text files, JPEG is used for JPEG images, and APPL is for application programs. File types are used to figure out which applications can open a specific file. For example, SimpleText can open text files, but it refuses to open application programs. The creator code is second four-character code used to associate the file with a specific application. For example, SimpleText has the creator code ttxt, and PictureViewer uses creator code ogle. When you double-click on a file in the Finder, the Finder launches the application with the corresponding creator code, if it exists. The creator code for a file also determines what icon it uses in the Finder. For example, this screenshot shows three text files in a folder. Each file has the same filename suffix, .c, but that suffix is irrelevant here. Since the files were created with three different programs, they have three different icons—the text file icon for SimpleText files, MPW files, and BBEdit files. ",
-    "url": "/syncfiles//https://depp.github.io/tech/finder-info#type-and-creator-codes",
+    "url": "https://depp.github.io/syncfiles/tech/finder-info#type-and-creator-codes",
     "relUrl": "/tech/finder-info#type-and-creator-codes"
   },"18": {
     "doc": "Finder Info",
     "title": "Location and Color",
     "content": "You can see that the Finder lets you freely place your files in different locations within a window. You can also assign one of eight different labels to a file or folder—each label corresponds to a specific name and color. The location and color are stored in the Finder info. Here is what this looks like System 7. The “Utilities” folder below is given a label which makes the icon red. ",
-    "url": "/syncfiles//https://depp.github.io/tech/finder-info#location-and-color",
+    "url": "https://depp.github.io/syncfiles/tech/finder-info#location-and-color",
     "relUrl": "/tech/finder-info#location-and-color"
   },"19": {
     "doc": "Finder Info",
     "title": "Rebuilding the Desktop",
     "content": "Volumes on an old Macintosh system contain an invisible file named “Desktop DB”. This file contains a record of all the applications on the system and the file types that they can open. Unfortunately, this database can easily become outdated. When it’s outdated, some applications and files on your computer will use the generic application and file icons, rather than the correct icons. You can rebuild the database by holding down the command and option keys while the computer starts—hold these keys down until you can see the files and folders on your desktop. ",
-    "url": "/syncfiles//https://depp.github.io/tech/finder-info#rebuilding-the-desktop",
+    "url": "https://depp.github.io/syncfiles/tech/finder-info#rebuilding-the-desktop",
     "relUrl": "/tech/finder-info#rebuilding-the-desktop"
   },"20": {
     "doc": "Finder Info",
     "title": "File Extensions",
     "content": "Some systems have a control panel called PC Exchange or File Exchange, which lets you assign a default type code and creator code to files based on their extension. This was primarily used so that you could read disks formatted for DOS or Windows on a Macintosh, and more easily exchange files with people using DOS or Windows. Starting with Mac OS X, file extensions became the primary way to identify file types, and type codes became unnecessary. ",
-    "url": "/syncfiles//https://depp.github.io/tech/finder-info#file-extensions",
+    "url": "https://depp.github.io/syncfiles/tech/finder-info#file-extensions",
     "relUrl": "/tech/finder-info#file-extensions"
   },"21": {
     "doc": "Technical Guide",
     "title": "Technical Guide",
     "content": "This guide explains how files and filesystems work on different versions of Mac OS. There are some important differences that make it so you can’t just . ",
-    "url": "/syncfiles//https://depp.github.io/tech/",
+    "url": "https://depp.github.io/syncfiles/tech/",
     "relUrl": "/tech/"
   },"22": {
     "doc": "Home",
     "title": "Transfer files to and from old Macintosh systems",
     "content": " ",
-    "url": "/syncfiles//https://depp.github.io/#transfer-files-to-and-from-old-macintosh-systems",
+    "url": "https://depp.github.io/syncfiles/#transfer-files-to-and-from-old-macintosh-systems",
     "relUrl": "/#transfer-files-to-and-from-old-macintosh-systems"
   },"23": {
     "doc": "Home",
     "title": "Home",
     "content": " ",
-    "url": "/syncfiles//https://depp.github.io/",
+    "url": "https://depp.github.io/syncfiles/",
     "relUrl": "/"
   },"24": {
     "doc": "Resource Forks",
     "title": "Resource Forks",
     "content": "Mac OS traditionally provided two forks for a file: the data fork and the resource fork. A fork is a data stream within a file which can be independently manipulated. You can open one fork and write data to it, change the length of data, or delete the fork entirely without affecting the file’s other fork. Think of the forks as two separate files, bundled up as one file. When you copy a file from a non-Mac OS system to a Mac, what you get is a file that only contains a data fork. The resource fork is used to store Mac-specific data. It’s almost always organized into chunks called resources, which are discrete pieces of data surch as icons, images, sounds, strings, or 68K code segments. Each resource is identified by a four-character type code and 16-bit ID number. The resource fork format has a maximum size of about 16 MiB because it encodes file offsets using 24 bits. ",
-    "url": "/syncfiles//https://depp.github.io/tech/resource-forks",
+    "url": "https://depp.github.io/syncfiles/tech/resource-forks",
     "relUrl": "/tech/resource-forks"
   },"25": {
     "doc": "Resource Forks",
     "title": "Historical Use",
     "content": "Prior to Mac OS X, programs on the Mac make heavy use of the resource fork. For example, an application’s resource fork contains 68K code, icons, dialog box layouts, version information, text data, and sometimes various custom data types. PowerPC code is stored in the data fork, although various resources are still necessary for PowerPC applications to run correctly. Applications also use resource forks in other files to store data. Some text editors use the resource fork of a text file to remember the state of the text editor when editing that file. Games often use files with resource forks to store images, sound effects, or level data. Starting with Mac OS X, data that was previously stored as resources in the resource fork are stored as a separate file instead. For example, application and file icons prior to Mac OS X are stored in the resource fork, but in Mac OS X, each icon is stored as a separate file. It is unusual to find a Mac OS X program that uses the resource fork at all. ",
-    "url": "/syncfiles//https://depp.github.io/tech/resource-forks#historical-use",
+    "url": "https://depp.github.io/syncfiles/tech/resource-forks#historical-use",
     "relUrl": "/tech/resource-forks#historical-use"
   },"26": {
     "doc": "Resource Forks",
     "title": "Are Resource Forks Really Structured?",
     "content": "Note the key words above: a resource fork is almost always organized into chunks called resources. A file’s resource fork is really just an alternate stream of data, like the data fork. You can put whatever data you like in the resource fork. In practice, the resource fork almost always uses a specific format. Note that this goes both ways. Just like you can store arbitrary data in the resource fork, you can also use the data fork to store resources. Using the data fork to store resources has disadvantages, because you can’t edit those resources with ResEdit or use the Macintosh resource manager API to read those resources, so it is rarely done. Some applications store application preferences or other data in the resource fork of a file, and because resource forks can get corrupted, you occasionally see a backup copy of the resource fork stored in the data fork of the same file. This is not common, however. ",
-    "url": "/syncfiles//https://depp.github.io/tech/resource-forks#are-resource-forks-really-structured",
+    "url": "https://depp.github.io/syncfiles/tech/resource-forks#are-resource-forks-really-structured",
     "relUrl": "/tech/resource-forks#are-resource-forks-really-structured"
   },"27": {
     "doc": "Resource Forks",
     "title": "Preserving Resource Forks",
     "content": "Resource forks do not always need to be preserved when synchronizing files between systems. It depends on the file and what is being stored in the resource fork. For example, when you save a text file in BBEdit or MPW, the editor state is recorded as a resource in the text file. Deleting this resource fork doesn’t affect your ability to use the file. On the other hand, if you delete the resource fork of an application, it won’t work at all. ",
-    "url": "/syncfiles//https://depp.github.io/tech/resource-forks#preserving-resource-forks",
+    "url": "https://depp.github.io/syncfiles/tech/resource-forks#preserving-resource-forks",
     "relUrl": "/tech/resource-forks#preserving-resource-forks"
   },"28": {
     "doc": "Resource Forks",
     "title": "Examining the Resource Fork",
     "content": "You can use ResEdit or Resorcerer to view and edit the resources in a resource fork, or the MPW tools Rez and DeRez. ResEdit is the most common tool to use, because it’s free (unlike Resorcerer, which costs $256) and has a nice user interface (unlike Rez and DeRez, which convert resource files to and from text files). ResEdit is available from Apple and the latest version is 2.1.3. Here’s what the resource fork of the MacBinary application looks like in ResEdit: . When you open a file in ResEdit, ResEdit shows you an overview of the different types of resources in the file. MacBinary contains 18 different types of resources. When you open one of the types, ResEdit shows you a list of resources for that type. For example, we can look at the CODE resources in MacBinary, which contain segments of executable 68K code which can be independently loaded. Each individual resource has an ID, which is a signed 16-bit number, and optionally has a name. ResEdit provides simple editors for certain types of resources, like icons. This makes it easy to create your own custom icons for Macintosh applications. You didn’t have to be a programmer to take advantage of this—if you wanted to create your own custom folder icons for certain folders, you could do that too. You could find custom icon collections online or on CDs bundled with magazines. Application and folder icons are made from several types of icons with the same ID number, creating an icon family. An icon family allows you to create custom icons for different sizes and color depths. Another common type of resource is string resources. Applications sometimes store strings used by the application in these resources. This might be done to reduce the memory footprint of the application, or it might be done to make it easier to translate an application into another language. It’s not necessary to use string resources at all, and MacBinary doesn’t contain any string resources. There are string resources in SimpleText, however, containing help messages, error messages, and various other strings. ",
-    "url": "/syncfiles//https://depp.github.io/tech/resource-forks#examining-the-resource-fork",
+    "url": "https://depp.github.io/syncfiles/tech/resource-forks#examining-the-resource-fork",
     "relUrl": "/tech/resource-forks#examining-the-resource-fork"
   }
 }
