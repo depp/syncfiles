@@ -4,10 +4,12 @@ load("//bazel:copts.bzl", "COPTS")
 cc_library(
     name = "lib",
     srcs = [
+        "crc32.c",
         "toolbox.c",
         "util.c",
     ],
     hdrs = [
+        "crc32.h",
         "defs.h",
         "endian.h",
         "util.h",
@@ -42,5 +44,17 @@ cc_test(
     deps = [
         ":lib",
         ":test",
+    ],
+)
+
+cc_test(
+    name = "crc32_test",
+    size = "small",
+    srcs = [
+        "crc32_test.c",
+    ],
+    copts = COPTS,
+    deps = [
+        ":lib",
     ],
 )
