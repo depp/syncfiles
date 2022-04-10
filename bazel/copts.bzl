@@ -12,7 +12,7 @@
 
 # Base C options
 COPTS_BASE = [
-    "-std=c90",
+    "-std=c11",
 ]
 
 _COPTS_WARNING = [
