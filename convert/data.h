@@ -1,5 +1,8 @@
-#ifndef data_h
-#define data_h
+// Copyright 2022 Dietrich Epp.
+// This file is part of SyncFiles. SyncFiles is licensed under the terms of the
+// Mozilla Public License, version 2.0. See LICENSE.txt for details.
+#ifndef CONVERT_DATA_H
+#define CONVERT_DATA_H
 /* data.h - charmap data, not used for classic Mac OS builds */
 #include "lib/defs.h"
 

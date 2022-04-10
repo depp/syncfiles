@@ -1,5 +1,8 @@
-#ifndef lib_defs_h
-#define lib_defs_h
+// Copyright 2022 Dietrich Epp.
+// This file is part of SyncFiles. SyncFiles is licensed under the terms of the
+// Mozilla Public License, version 2.0. See LICENSE.txt for details.
+#ifndef LIB_DEFS_H
+#define LIB_DEFS_H
 /* defs.h - common definitions. */
 
 /*==============================================================================

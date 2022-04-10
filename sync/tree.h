@@ -1,5 +1,8 @@
-#ifndef sync_tree_h
-#define sync_tree_h
+// Copyright 2022 Dietrich Epp.
+// This file is part of SyncFiles. SyncFiles is licensed under the terms of the
+// Mozilla Public License, version 2.0. See LICENSE.txt for details.
+#ifndef SYNC_TREE_H
+#define SYNC_TREE_H
 /* tree.h - binary search trees of file metadata */
 
 #include "sync/meta.h"

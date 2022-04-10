@@ -1,3 +1,6 @@
+// Copyright 2022 Dietrich Epp.
+// This file is part of SyncFiles. SyncFiles is licensed under the terms of the
+// Mozilla Public License, version 2.0. See LICENSE.txt for details.
 /* toolbox.c - replacement functions for Mac OS toolbox functions
 
    This is used to run conversion tests on non-Mac OS systems to make

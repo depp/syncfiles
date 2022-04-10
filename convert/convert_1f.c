@@ -1,3 +1,6 @@
+// Copyright 2022 Dietrich Epp.
+// This file is part of SyncFiles. SyncFiles is licensed under the terms of the
+// Mozilla Public License, version 2.0. See LICENSE.txt for details.
 /* convert_1f.c - Forward conversion from extended ASCII to UTF-8. */
 #include "convert/convert.h"
 #include "lib/defs.h"

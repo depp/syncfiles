@@ -1,5 +1,8 @@
-#ifndef test_h
-#define test_h
+// Copyright 2022 Dietrich Epp.
+// This file is part of SyncFiles. SyncFiles is licensed under the terms of the
+// Mozilla Public License, version 2.0. See LICENSE.txt for details.
+#ifndef LIB_TEST_H
+#define LIB_TEST_H
 /* test.h - unit testing definitions. */
 
 #include "lib/defs.h"

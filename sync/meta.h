@@ -1,5 +1,8 @@
-#ifndef sync_meta_h
-#define sync_meta_h
+// Copyright 2022 Dietrich Epp.
+// This file is part of SyncFiles. SyncFiles is licensed under the terms of the
+// Mozilla Public License, version 2.0. See LICENSE.txt for details.
+#ifndef SYNC_META_H
+#define SYNC_META_H
 /* meta.h - file metadata */
 
 #include "lib/defs.h"

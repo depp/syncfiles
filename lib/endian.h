@@ -1,5 +1,8 @@
-#ifndef lib_endian_h
-#define lib_endian_h
+// Copyright 2022 Dietrich Epp.
+// This file is part of SyncFiles. SyncFiles is licensed under the terms of the
+// Mozilla Public License, version 2.0. See LICENSE.txt for details.
+#ifndef LIB_ENDIAN_H
+#define LIB_ENDIAN_H
 /* endian.h - byte order and byte swapping */
 
 /*
@@ -72,4 +75,4 @@
 
 #endif /* TARGET_API_MAC_OS8 */
 
-#endif /* lib_endian_h */
+#endif
