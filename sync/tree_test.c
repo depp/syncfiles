@@ -8,9 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-enum
-{
-	kFileCount = 200
+enum {
+	kFileCount = 200,
 };
 
 static UInt32 Random(UInt32 state)

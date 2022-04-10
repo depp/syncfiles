@@ -4,7 +4,6 @@ AccessModifierOffset: -4
 AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
-AllowShortEnumsOnASingleLine: false
 DerivePointerAlignment: false
 IncludeBlocks: Preserve
 IncludeCategories:

@@ -7,10 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-enum
-{
+enum {
 	kInitialBufSize = 4 * 1024,
-	kConvertBufferSize = 1024
+	kConvertBufferSize = 1024,
 };
 
 static UInt8 *gBuffer[3];

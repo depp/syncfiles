@@ -2,8 +2,7 @@
 #include "convert/convert.h"
 #include "lib/defs.h"
 
-enum
-{
+enum {
 	/* Maximum length of encoded character. */
 	kMaxEncodedLength = 8,
 

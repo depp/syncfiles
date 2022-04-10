@@ -7,8 +7,7 @@
 /* A reference to a file node by 1-based index, or 0 for none. */
 typedef int FileRef;
 
-typedef enum
-{
+typedef enum {
 	kNodeBlack,
 	kNodeRed,
 } NodeColor;

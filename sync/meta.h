@@ -15,21 +15,18 @@ struct Timestamp {
 };
 #endif
 
-typedef enum
-{
+typedef enum {
 	kTypeNotExist,
 	kTypeFile,
-	kTypeDirectory
+	kTypeDirectory,
 } FileType;
 
-enum
-{
+enum {
 	kLocal,
-	kRemote
+	kRemote,
 };
 
-enum
-{
+enum {
 	/* Maximum length of a filename. This is a Mac OS limitation. */
 	kFilenameLength = 31,
 

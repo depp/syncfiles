@@ -4,8 +4,7 @@
 
 #include "lib/defs.h"
 
-enum
-{
+enum {
 	/* Constants for CR and LF. Note that we should not use '\n' or '\r'
 	   anywhere, because these character constants may have unexpected values on
 	   certain old Mac OS compilers, depending on the compiler settings. In
@@ -17,8 +16,7 @@ enum
 	kCharSubstitute = 63
 };
 
-typedef enum
-{
+typedef enum {
 	/* Don't translite line breaks. */
 	kLineBreakKeep,
 
@@ -33,11 +31,7 @@ typedef enum
 } LineBreakConversion;
 
 /* Directions that the converter runs in. */
-typedef enum
-{
-	kToUTF8,
-	kFromUTF8
-} ConvertDirection;
+typedef enum { kToUTF8, kFromUTF8 } ConvertDirection;
 
 /* Get the character map used for the given Mac OS script and region codes.
    Return -1 if no known character map exists. */

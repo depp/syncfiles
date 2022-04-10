@@ -22,8 +22,7 @@ static int CompareFilename(const FileName *x, const FileName *y)
 	return 0;
 }
 
-enum
-{
+enum {
 	/*
 	  Maximum height of a file tree.
 

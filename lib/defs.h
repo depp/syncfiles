@@ -69,10 +69,9 @@ Basic types
 #if __bool_true_false_are_defined
 typedef bool Boolean;
 #else
-enum
-{
+enum {
 	false,
-	true
+	true,
 };
 typedef unsigned char Boolean;
 #endif
@@ -95,8 +94,7 @@ Error codes and error reporting
 ==============================================================================*/
 
 /* Error codes. */
-typedef enum
-{
+typedef enum {
 	/* No error. */
 	kErrorOK,
 
