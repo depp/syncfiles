@@ -25,7 +25,7 @@
   },"4": {
     "doc": "File APIs",
     "title": "FSSpec API",
-    "content": "The FSSpec API does not change semantics, but provides a simple data structure which is used to store the volume ID, directory ID, and filename. This structure is called FSSpec. struct FSSpec { short vRefNum; long parID; unsigned char name[64]; }; . Functions which use an FSSpec are named with the FSp prefix. These functions are preferred for over the previous versions for their simplicity. For example, FSpOpenDF, which opens a file’s data fork, and FSpCreate, which creates a new file: . OSErr FSpOpenDF( const FSSpec * spec, SInt8 permission, short * refNum); OSErr FSpCreate( const FSSpec * spec, OSType creator, OSType fileType, ScriptCode scriptTag); . Note that the character encoding is specified when creating a file, using the scriptTag parameter (although technically, this does not completely specify an encoding). The character encoding is not specified when opening a file, instead, the encoding is ignored and treated as if it were the Mac OS Roman encoding. This API preserves the encoding used for filenames, but you only need the correct bytestring to refer to existing files. Starting in Mac OS X 10.4, this API and other APIs before it are marked as deprecated. ",
+    "content": "Mac System 7 introduces the FSSPec API. It does not change semantics, but provides a simple data structure which is used to store the volume ID, directory ID, and filename. This structure is called FSSpec. struct FSSpec { short vRefNum; long parID; unsigned char name[64]; }; . Functions which use an FSSpec are named with the FSp prefix. These functions are preferred for over the previous versions for their simplicity. For example, FSpOpenDF, which opens a file’s data fork, and FSpCreate, which creates a new file: . OSErr FSpOpenDF( const FSSpec * spec, SInt8 permission, short * refNum); OSErr FSpCreate( const FSSpec * spec, OSType creator, OSType fileType, ScriptCode scriptTag); . Note that the character encoding is specified when creating a file, using the scriptTag parameter (although technically, this does not completely specify an encoding). The character encoding is not specified when opening a file, instead, the encoding is ignored and treated as if it were the Mac OS Roman encoding. This API preserves the encoding used for filenames, but you only need the correct bytestring to refer to existing files. Starting in Mac OS X 10.4, this API and other APIs before it are marked as deprecated. ",
     "url": "https://depp.github.io/syncfiles/tech/apis#fsspec-api",
     "relUrl": "/tech/apis#fsspec-api"
   },"5": {
@@ -67,7 +67,7 @@
   },"11": {
     "doc": "Filesystems",
     "title": "HFS Plus",
-    "content": "HFS Plus was introduced with Mac OS 8.1 and added support for filesystem journaling, Unicode filenames, up to 255 characters per filename, and case-sensitive filenames if enabled. Mac OS 8.1 was released in January 1998. To provide backwards compatibility with older APIs, HFS Plus records the encoding that filenames should be encoded with when listing files in the older APIs. The volume header tracks a list of all encodings used for all filenames on the volume, so the appropriate conversion tables can be loaded when the volume is mounted. When an application using an older API lists the files in a directory, it will see backwards-compatible filenames substituted for filenames that use unsupported characters or filenames that are too long. Filenames are stored in UTF-16, decomposed using the rules from Unicode 2.1 (up to Mac OS X 10.2) or Unicode 3.2 (for Mac OS X 10.3 and later). See [Apple Technical Note TN1150: HFS Plus Volume Format][tn1150]. There is a variant of HFS Plus called HFSX. The major difference between normal HFS Plus and HFSX is that HFSX does not carry an HFS wrapper for backwards compatibility with systems that do not support HFS Plus. ",
+    "content": "HFS Plus was introduced with Mac OS 8.1 and added support for filesystem journaling, Unicode filenames, up to 255 characters per filename, and case-sensitive filenames if enabled. Mac OS 8.1 was released in January 1998. To provide backwards compatibility with older APIs, HFS Plus records the encoding that filenames should be encoded with when listing files in the older APIs. The volume header tracks a list of all encodings used for all filenames on the volume, so the appropriate conversion tables can be loaded when the volume is mounted. When an application using an older API lists the files in a directory, it will see backwards-compatible filenames substituted for filenames that use unsupported characters or filenames that are too long. Filenames are stored in UTF-16, decomposed using the rules from Unicode 2.1 (up to Mac OS X 10.2) or Unicode 3.2 (for Mac OS X 10.3 and later). See Apple Technical Note TN1150: HFS Plus Volume Format. There is a variant of HFS Plus called HFSX. The major difference between normal HFS Plus and HFSX is that HFSX does not carry an HFS wrapper for backwards compatibility with systems that do not support HFS Plus. ",
     "url": "https://depp.github.io/syncfiles/tech/filesystems#hfs-plus",
     "relUrl": "/tech/filesystems#hfs-plus"
   },"12": {
@@ -127,7 +127,7 @@
   },"21": {
     "doc": "Technical Guide",
     "title": "Technical Guide",
-    "content": "This guide explains how files and filesystems work on different versions of Mac OS. There are some important differences that make it so you can’t just . ",
+    "content": "This guide explains how files and filesystems work on different versions of Mac OS. There are some important differences—you can’t just write code once and have it work well across a wide variety of Mac OS systems. ",
     "url": "https://depp.github.io/syncfiles/tech/",
     "relUrl": "/tech/"
   },"22": {
@@ -172,5 +172,29 @@
     "content": "You can use ResEdit or Resorcerer to view and edit the resources in a resource fork, or the MPW tools Rez and DeRez. ResEdit is the most common tool to use, because it’s free (unlike Resorcerer, which costs $256) and has a nice user interface (unlike Rez and DeRez, which convert resource files to and from text files). ResEdit is available from Apple and the latest version is 2.1.3. Here’s what the resource fork of the MacBinary application looks like in ResEdit: . When you open a file in ResEdit, ResEdit shows you an overview of the different types of resources in the file. MacBinary contains 18 different types of resources. When you open one of the types, ResEdit shows you a list of resources for that type. For example, we can look at the CODE resources in MacBinary, which contain segments of executable 68K code which can be independently loaded. Each individual resource has an ID, which is a signed 16-bit number, and optionally has a name. ResEdit provides simple editors for certain types of resources, like icons. This makes it easy to create your own custom icons for Macintosh applications. You didn’t have to be a programmer to take advantage of this—if you wanted to create your own custom folder icons for certain folders, you could do that too. You could find custom icon collections online or on CDs bundled with magazines. Application and folder icons are made from several types of icons with the same ID number, creating an icon family. An icon family allows you to create custom icons for different sizes and color depths. Another common type of resource is string resources. Applications sometimes store strings used by the application in these resources. This might be done to reduce the memory footprint of the application, or it might be done to make it easier to translate an application into another language. It’s not necessary to use string resources at all, and MacBinary doesn’t contain any string resources. There are string resources in SimpleText, however, containing help messages, error messages, and various other strings. ",
     "url": "https://depp.github.io/syncfiles/tech/resource-forks#examining-the-resource-fork",
     "relUrl": "/tech/resource-forks#examining-the-resource-fork"
+  },"29": {
+    "doc": "Safe Saving",
+    "title": "Safe Saving",
+    "content": "There are a number of different goals for when your program saves a file: . | I/O errors should be reported. If the data does not make it to disk, then tell the user that the operation failed. | Saves are atomic. After saving, you either get the old version of the file or the complete new version of the file. If your program crashes, it’s okay if the old file is untouched, but it’s not okay if it’s been partially overwritten. | Saves preserve file references. Any references to a document (aliases or bookmarks) remain valid after modifying the document. | Saves do not change the creation date, or other metadata associated with the file. | . If your first thought is, “that sounds like it could be complicated”, then you’re in good company. Theodore Ts’o wrote an article in 2009, Don’t fear the fsync! which covers some of these issues on Linux in detail. ",
+    "url": "https://depp.github.io/syncfiles/tech/safe-saving",
+    "relUrl": "/tech/safe-saving"
+  },"30": {
+    "doc": "Safe Saving",
+    "title": "Classic Mac OS",
+    "content": "HFS and HFS+ support an operation which exchanges the contents of files. The high-level API call looks like this: . OSErr FSpExchangeFiles( const FSSpec * source, const FSSpec * dest); . This function exchanges the contents of the two files (both forks), and exchanges the modification dates, but leaves the other metadata alone. The recipe for safe saving on HFS volumes is: . | Save the document to a temporary file on the same volume. | Exchange the contents of the original file and the temporary file with FSpExchangeFiles. | . You can test that FSpExchangeFiles is supported by a volume by getting the volume parameters. Not all filesystems support this operation. ",
+    "url": "https://depp.github.io/syncfiles/tech/safe-saving#classic-mac-os",
+    "relUrl": "/tech/safe-saving#classic-mac-os"
+  },"31": {
+    "doc": "Safe Saving",
+    "title": "Mac OS X",
+    "content": "Mac OS X provides a Unix system call that provides the same functionality as FSpExchangeFiles, but with a Unix API. int exchangedata( const char * path1 const char * path2, unsigned int options); . However, this function does not work on APFS. ",
+    "url": "https://depp.github.io/syncfiles/tech/safe-saving#mac-os-x",
+    "relUrl": "/tech/safe-saving#mac-os-x"
+  },"32": {
+    "doc": "Safe Saving",
+    "title": "Mac OS X 10.6+",
+    "content": "Starting on Mac OS X 10.6, the Foundation framework provides a method for safely replacing an item on the filesystem with a new item. This method is present on NSFileManager: . - (BOOL)replaceItemAtURL:(NSURL *)originalItemURL withItemAtURL:(NSURL *)newItemURL backupItemName:(NSString *)backupItemName options:(NSFileManagerItemReplacementOptions)options resultingItemURL:(NSURL * _Nullable *)resultingURL error:(NSError * _Nullable *)error; . This method should be preferred for Mac OS X 10.6 and newer. Unlike exchangedata(), this function works on APFS. ",
+    "url": "https://depp.github.io/syncfiles/tech/safe-saving#mac-os-x-106",
+    "relUrl": "/tech/safe-saving#mac-os-x-106"
   }
 }
