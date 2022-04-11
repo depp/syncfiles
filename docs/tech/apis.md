@@ -87,7 +87,7 @@ In this API, files are identified by volume ID, the directory ID within that vol
 
 ## FSSpec API
 
-The FSSpec API does not change semantics, but provides a simple data structure which is used to store the volume ID, directory ID, and filename. This structure is called `FSSpec`.
+Mac System 7 introduces the FSSPec API. It does not change semantics, but provides a simple data structure which is used to store the volume ID, directory ID, and filename. This structure is called `FSSpec`.
 
 ```c
 struct FSSpec {
