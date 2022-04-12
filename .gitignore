@@ -1,3 +1,5 @@
 /.user.bazelrc
 /bazel-*
 /gh-pages
+*.xcworkspace
+xcuserdata
