@@ -1,9 +1,6 @@
 // Copyright 2022 Dietrich Epp.
 // This file is part of SyncFiles. SyncFiles is licensed under the terms of the
 // Mozilla Public License, version 2.0. See LICENSE.txt for details.
-/* Defined to get vsnprintf. */
-#define _XOPEN_SOURCE 500
-
 #include "lib/test.h"
 #include "lib/util.h"
 

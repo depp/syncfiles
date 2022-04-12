@@ -41,7 +41,7 @@ static void Test32(void)
 {
 	union {
 		UInt32 i;
-		UInt8 b[2];
+		UInt8 b[4];
 	} u;
 	UInt32 be;
 

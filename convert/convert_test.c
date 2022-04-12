@@ -110,7 +110,7 @@ static void TestConverter(const char *name, struct CharmapData data)
 	cf.data = NULL;
 	cr.data = NULL;
 
-	SetTestNamef(name);
+	SetTestName(name);
 
 	/* Load the converter into memory and build the conversion table. */
 	datap = (void *)data.ptr;
