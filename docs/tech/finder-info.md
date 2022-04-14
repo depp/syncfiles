@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Finder Info
-nav_order: 2
+nav_order: 3
 permalink: /tech/finder-info
 parent: Technical Guide
 ---

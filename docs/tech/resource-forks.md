@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Resource Forks
-nav_order: 1
+nav_order: 2
 permalink: /tech/resource-forks
 parent: Technical Guide
 ---

@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Safe Saving
-nav_order: 5
+nav_order: 6
 permalink: /tech/safe-saving
 parent: Technical Guide
 ---
