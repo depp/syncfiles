@@ -47,150 +47,186 @@
     "url": "https://depp.github.io/syncfiles/tech/apis#aliases-and-bookmarks",
     "relUrl": "/tech/apis#aliases-and-bookmarks"
   },"8": {
+    "doc": "Archive Formats",
+    "title": "Archive Formats",
+    "content": "Files on old Macintosh systems often have metadata and extra data streams that they need in order to work correctly. If you copy a file from an old Macintosh computer to a Windows or Linux computer, and back, the extra data will be lost and the file may not work correctly. The extra data that Macintosh archive formats must preserve are the file type code and creator code (see Finder Info) and the resource fork (see Resource Forks). Files don’t always need special treatment. Plain text files and common image formats like PNG and JPEG are pure data. With software like PC Exchange or Software Exchange, the system can automatically set the file type code and creator code from the file’s extension. This is all you need for plain text, PNG, JPEG, and various other formtas. However, applications and most types of files will not work correctly if the extra is lost. Archive formats provide ways to preserve this data. ",
+    "url": "https://depp.github.io/syncfiles/tech/archive-formats",
+    "relUrl": "/tech/archive-formats"
+  },"9": {
+    "doc": "Archive Formats",
+    "title": "Which Format Should I Use?",
+    "content": "This is a matter of opinion! However, some choices are better than others. | Raw disk image (extension .img, or sometimes .dsk) is the first choice you should consider. Raw disk images are easy to create, preserve all data, and can be used almost anywhere. Note that not all .img files are raw disk images. | UDIF disk images (extension .dmg) are preferred for archiving and distributing software for Mac OS X. | NDIF disk images with MacBinary (extension .img.bin) are useful for uploading and sharing software and files for Mac OS 9 and earlier. | . ",
+    "url": "https://depp.github.io/syncfiles/tech/archive-formats#which-format-should-i-use",
+    "relUrl": "/tech/archive-formats#which-format-should-i-use"
+  },"10": {
+    "doc": "Archive Formats",
+    "title": "What Should I Avoid?",
+    "content": ". | Don’t transfer NDIF disk images without preserving the image’s resource fork. | Don’t double-encode files. Stuffit archives do not need any further encoding. Rather than using .sit.bin or .sit.hqx, just use .sit. | . ",
+    "url": "https://depp.github.io/syncfiles/tech/archive-formats#what-should-i-avoid",
+    "relUrl": "/tech/archive-formats#what-should-i-avoid"
+  },"11": {
+    "doc": "Archive Formats",
+    "title": "Disk Images",
+    "content": "A disk image contains a complete copy of an HFS volume or other filesystem, stored as a file. Raw Disk Image . A raw disk image is a complete HFS (or other) filesystem, stored as a file. Raw disk are easy to create and can be used by emulators, vintage computers, and tools on modern computers. Raw disk images can be safely transferred to other systems without losing data. Note that files which have been deleted can sometimes be restored from raw disk images! DiskCopy lets you avoid this by choosing the “zero blocks” option, which is enabled by default. Raw disk images often use the file extension .img or .dsk. You may find it useful to name your raw images with the .dsk extension to distinguish raw disk images from NDIF disk images. You can create an empty raw disk image using DiskCopy, or create one from the contents of a folder. DiskCopy creates raw disk images when you choose a “read/write” image format. The HFS Utilities package provides tools for moving data to and from raw disk images. DiskCopy 4.2 Disk Image . A DiskCopy 4.2 Disk image contains an image of a floppy disk, plus some metadata like data checksums. DiskCopy 4.2 images are supported by Mini vMac. They contain resource forks, but the image can be used even if the resource fork is deleted. NDIF Disk Image . An NDIF image contains a modified version of an HFS filesystem with additional metadata, such as checksums, stored in the file’s resource fork. This additional data appears to be stored in a 200-byte 'bcem' resource with ID 128, but NDIF is not publicly documented and it is a matter of guesswork. If you delete the 'bcem' resource, the disk image will not mount. NDIF images can be compressed. If you want to transfer NDIF images to other systems, encode them with MacBinary (or another encoding that preserves the resource fork). UDIF Disk Image . A UDIF disk image is like an NDIF disk image, but contains all of its data in the data fork. UDIF appeared on Mac OS X, although it is reportedly possible to use them on Mac OS 9. You can also mount a UDIF image in Mac OS X and access the mounted image from the Classic environment. UDIF disk images use the file extension .dmg. UDIF images are compressed by default. Self-Mounting Image . Self-mounting images typically use the extension .smi. Self-mounting images are applications. Running the application mounts the image. ISO, Toast . ISO and Toast images are disk images created for burning optical disks. ",
+    "url": "https://depp.github.io/syncfiles/tech/archive-formats#disk-images",
+    "relUrl": "/tech/archive-formats#disk-images"
+  },"12": {
+    "doc": "Archive Formats",
+    "title": "Single-File Encodings",
+    "content": "If you just need to preserve the Macintosh metadata for a single file, there are three common options. MacBinary . MacBinary combines a file’s data fork, resource fork, and metadata into a single file. It is the preferred encoding for transferring individual Macintosh files between systems or for working with Macintosh files on non-Macintosh systems. MacBinary uses the .bin extension. Note that if a file format has a well-known extension and does not need its resource fork, MacBinary is unnecessary. There is no point in creating a .sit.bin file, for example. This increases the file size but does not provide any benefits. BinHex . BinHex combines a file’s data fork, resource fork, and metadata into a single file. The result is encoded as pure ASCII text, which increases the file size, but allows BinHex files to be transferred over old email systems or newsgroups without being damaged. Old email systems are not 8-bit clean and would only transmit the low 7 bits of each byte. This worked for pure ASCII text files, but would mangle most other types of files. BinHex also uses a simple run-length encoding and stores CRC checksums of the data. BinHex uses the .hqx extension. It is common to see BinHex files on old websites, but the format has been superceded by MacBinary. Note that it is not necessary or useful to encode Stuffit archives with BinHex, unless you are transferring data across a 7-bit connection (which is unlikely). If you see a .sit.hqx file, it can be safely decoded to a .sit file, even on non-Macintosh systems. AppleDouble, AppleSingle . AppleDouble is likely the most ubiquitous format for preserving Macintosh metadata, because it’s still used by modern versions of macOS to preserve medatada in zip files, on network shares, and on disk volumes formatted with non-Macintosh filesystems like FAT. AppleDouble is also used by A/UX. AppleDouble is called “AppleDouble” because the data and metadata are stored in separate files. AppleSingle uses the same format, but stores the data and metadata in one file. AppleDouble is convenient because it lets you use the same files from both a Macintosh system and another system. There is no standard file extension for AppleDouble files, but there is a standard prefix, which is ._. If you save a file named MyFile on a FAT filesystem or Samba network share, Mac OS X will also create an AppleDouble file named ._MyFile, if necessary. If you have used flash drives or network shares to share files between Mac OS X and other systems like Linux or Windows, you have problably seen these AppleDouble files (and the related .DS_Store files). ",
+    "url": "https://depp.github.io/syncfiles/tech/archive-formats#single-file-encodings",
+    "relUrl": "/tech/archive-formats#single-file-encodings"
+  },"13": {
+    "doc": "Archive Formats",
+    "title": "Compression Formats",
+    "content": "Stuffit . Stuffit is the more popular compression program for the Macintosh during the 1990s and late 1980s. Stuffit archives use the .sit extension. Stuffit fell out of use after Apple released Mac OS X, and was replaced by .zip and .dmg. Most Mac files shared on websites are compressed using Stuffit. Compact Pro . Compact Pro is a compression program which was somewhat less popular than Stuffit. Compact Pro archives use the .cpt extension. PackIt . PackIt is an early compression program for Macintosh. Files are compressed using simple Huffman coding. PackIt archives use the .pit extension. PackIt archives are rare. ",
+    "url": "https://depp.github.io/syncfiles/tech/archive-formats#compression-formats",
+    "relUrl": "/tech/archive-formats#compression-formats"
+  },"14": {
     "doc": "Filesystems",
     "title": "Filesystems",
     "content": "This document focuses on the different filesystems used by Mac OS over the years and how filenames work on these filesystems. ",
     "url": "https://depp.github.io/syncfiles/tech/filesystems",
     "relUrl": "/tech/filesystems"
-  },"9": {
+  },"15": {
     "doc": "Filesystems",
     "title": "MFS",
     "content": "Macintosh file system (MFS) is Apple’s filesystem for the first Macintosh. MFS does not support directories and has a maximum filename length of 63 characters. According to Wikipedia, the final OS versions that supported MFS were 7.6 for read-write access and 8.0 for read-only access. It is unusual to see this filesystem in practice, since it was replaced by HFS shortly after it appeared. ",
     "url": "https://depp.github.io/syncfiles/tech/filesystems#mfs",
     "relUrl": "/tech/filesystems#mfs"
-  },"10": {
+  },"16": {
     "doc": "Filesystems",
     "title": "HFS",
     "content": "Hierarchical file system (HFS) was introduced shortly after MFS and replaced MFS. It first appeared alongside Apple’s first Macintosh hard disk, the “Hard Disk 20” in 1985, and afterwards appeared in the 128K ROM on the Mac Plus. HFS introduces directories and a new set of file APIs. The final versions of Mac OS which support HFS are Mac OS X 10.5 Leopard for read-write access and macOS 10.14 Mojave for read-only access. HFS has a maximum filename length to 31 characters. The script used for the filename is recorded, but filenames are compared as if they are were encoded using the Macintosh Roman encoding. Filenames are case insensitive, and the sort order is described on page A-20 of Inside Macintosh: Text (1993). ",
     "url": "https://depp.github.io/syncfiles/tech/filesystems#hfs",
     "relUrl": "/tech/filesystems#hfs"
-  },"11": {
+  },"17": {
     "doc": "Filesystems",
     "title": "HFS Plus",
     "content": "HFS Plus was introduced with Mac OS 8.1 and added support for filesystem journaling, Unicode filenames, up to 255 characters per filename, and case-sensitive filenames if enabled. Mac OS 8.1 was released in January 1998. To provide backwards compatibility with older APIs, HFS Plus records the encoding that filenames should be encoded with when listing files in the older APIs. The volume header tracks a list of all encodings used for all filenames on the volume, so the appropriate conversion tables can be loaded when the volume is mounted. When an application using an older API lists the files in a directory, it will see backwards-compatible filenames substituted for filenames that use unsupported characters or filenames that are too long. Filenames are stored in UTF-16, decomposed using the rules from Unicode 2.1 (up to Mac OS X 10.2) or Unicode 3.2 (for Mac OS X 10.3 and later). See Apple Technical Note TN1150: HFS Plus Volume Format. There is a variant of HFS Plus called HFSX. The major difference between normal HFS Plus and HFSX is that HFSX does not carry an HFS wrapper for backwards compatibility with systems that do not support HFS Plus. ",
     "url": "https://depp.github.io/syncfiles/tech/filesystems#hfs-plus",
     "relUrl": "/tech/filesystems#hfs-plus"
-  },"12": {
+  },"18": {
     "doc": "Filesystems",
     "title": "APFS",
     "content": "APFS is introduced in macOS 10.12.4. Filenames are encoded using UTF-8. Only code points assigned in Unicode 9.0 are permitted in filenames. APFS does not normalize filenames, but does store files by using the hash of the normalized version of the filename. ",
     "url": "https://depp.github.io/syncfiles/tech/filesystems#apfs",
     "relUrl": "/tech/filesystems#apfs"
-  },"13": {
+  },"19": {
     "doc": "Filesystems",
     "title": "UFS",
     "content": "UFS stands for Unix file system. It is a case-sensitive filesystem which is only supported by Mac OS X versions 10.0 through 10.5. UFS is not seen often. ",
     "url": "https://depp.github.io/syncfiles/tech/filesystems#ufs",
     "relUrl": "/tech/filesystems#ufs"
-  },"14": {
+  },"20": {
     "doc": "Filesystems",
     "title": "Disk Images",
     "content": "There are various formats for disk images: Disc Copy 4.2 images, NDIF images, and UDIF images. ",
     "url": "https://depp.github.io/syncfiles/tech/filesystems#disk-images",
     "relUrl": "/tech/filesystems#disk-images"
-  },"15": {
+  },"21": {
     "doc": "Finder Info",
     "title": "Finder Info",
     "content": "Mac OS also stores a small piece of metadata for each file called Finder Info. As the name implies, this contains information which is primarily used by the Finder (Finder is the Mac OS shell, which shows the desktop and filesystem). For example, this includes the file’s type and its location on-screen. There are different versions of the Finder info structure. This is what one of the older versions looks like, for a file: . struct FileInfo { OSType fileType; OSType fileCreator; UInt16 finderFlags; Point location; UInt16 reservedField; }; . ",
     "url": "https://depp.github.io/syncfiles/tech/finder-info",
     "relUrl": "/tech/finder-info"
-  },"16": {
+  },"22": {
     "doc": "Finder Info",
     "title": "Preservation",
     "content": "When transferring files to old Macintosh systems, it’s usually necessary to assign a correct type code for every file. It can be frustrating to work with files that do not have the correct type code, and you may not be able to open these files at all. There are various tools which can fix this problem. ResEdit can fix this problem, and there are some more specialized tools designed specifically to deal with this problem. ",
     "url": "https://depp.github.io/syncfiles/tech/finder-info#preservation",
     "relUrl": "/tech/finder-info#preservation"
-  },"17": {
+  },"23": {
     "doc": "Finder Info",
     "title": "Type and Creator Codes",
     "content": "Older versions of Mac OS do not use filename suffixes to associate files with applications. You can use any name you like for a file, and the file type is given by the file’s type code. The application to open it is given by the file’s creator code. The type code is a four-character code used to describe the type of the file. For example, TEXT is used for text files, JPEG is used for JPEG images, and APPL is for application programs. File types are used to figure out which applications can open a specific file. For example, SimpleText can open text files, but it refuses to open application programs. The creator code is second four-character code used to associate the file with a specific application. For example, SimpleText has the creator code ttxt, and PictureViewer uses creator code ogle. When you double-click on a file in the Finder, the Finder launches the application with the corresponding creator code, if it exists. The creator code for a file also determines what icon it uses in the Finder. For example, this screenshot shows three text files in a folder. Each file has the same filename suffix, .c, but that suffix is irrelevant here. Since the files were created with three different programs, they have three different icons—the text file icon for SimpleText files, MPW files, and BBEdit files. ",
     "url": "https://depp.github.io/syncfiles/tech/finder-info#type-and-creator-codes",
     "relUrl": "/tech/finder-info#type-and-creator-codes"
-  },"18": {
+  },"24": {
     "doc": "Finder Info",
     "title": "Location and Color",
     "content": "You can see that the Finder lets you freely place your files in different locations within a window. You can also assign one of eight different labels to a file or folder—each label corresponds to a specific name and color. The location and color are stored in the Finder info. Here is what this looks like System 7. The “Utilities” folder below is given a label which makes the icon red. ",
     "url": "https://depp.github.io/syncfiles/tech/finder-info#location-and-color",
     "relUrl": "/tech/finder-info#location-and-color"
-  },"19": {
+  },"25": {
     "doc": "Finder Info",
     "title": "Rebuilding the Desktop",
     "content": "Volumes on an old Macintosh system contain an invisible file named “Desktop DB”. This file contains a record of all the applications on the system and the file types that they can open. Unfortunately, this database can easily become outdated. When it’s outdated, some applications and files on your computer will use the generic application and file icons, rather than the correct icons. You can rebuild the database by holding down the command and option keys while the computer starts—hold these keys down until you can see the files and folders on your desktop. ",
     "url": "https://depp.github.io/syncfiles/tech/finder-info#rebuilding-the-desktop",
     "relUrl": "/tech/finder-info#rebuilding-the-desktop"
-  },"20": {
+  },"26": {
     "doc": "Finder Info",
     "title": "File Extensions",
     "content": "Some systems have a control panel called PC Exchange or File Exchange, which lets you assign a default type code and creator code to files based on their extension. This was primarily used so that you could read disks formatted for DOS or Windows on a Macintosh, and more easily exchange files with people using DOS or Windows. Starting with Mac OS X, file extensions became the primary way to identify file types, and type codes became unnecessary. ",
     "url": "https://depp.github.io/syncfiles/tech/finder-info#file-extensions",
     "relUrl": "/tech/finder-info#file-extensions"
-  },"21": {
+  },"27": {
     "doc": "Technical Guide",
     "title": "Technical Guide",
     "content": "This guide explains how files and filesystems work on different versions of Mac OS. There are some important differences—you can’t just write code once and have it work well across a wide variety of Mac OS systems. ",
     "url": "https://depp.github.io/syncfiles/tech/",
     "relUrl": "/tech/"
-  },"22": {
+  },"28": {
     "doc": "Home",
     "title": "Transfer files to and from old Macintosh systems",
     "content": " ",
     "url": "https://depp.github.io/syncfiles/#transfer-files-to-and-from-old-macintosh-systems",
     "relUrl": "/#transfer-files-to-and-from-old-macintosh-systems"
-  },"23": {
+  },"29": {
     "doc": "Home",
     "title": "Home",
     "content": " ",
     "url": "https://depp.github.io/syncfiles/",
     "relUrl": "/"
-  },"24": {
+  },"30": {
     "doc": "Resource Forks",
     "title": "Resource Forks",
     "content": "Mac OS traditionally provided two forks for a file: the data fork and the resource fork. A fork is a data stream within a file which can be independently manipulated. You can open one fork and write data to it, change the length of data, or delete the fork entirely without affecting the file’s other fork. Think of the forks as two separate files, bundled up as one file. When you copy a file from a non-Mac OS system to a Mac, what you get is a file that only contains a data fork. The resource fork is used to store Mac-specific data. It’s almost always organized into chunks called resources, which are discrete pieces of data surch as icons, images, sounds, strings, or 68K code segments. Each resource is identified by a four-character type code and 16-bit ID number. The resource fork format has a maximum size of about 16 MiB because it encodes file offsets using 24 bits. ",
     "url": "https://depp.github.io/syncfiles/tech/resource-forks",
     "relUrl": "/tech/resource-forks"
-  },"25": {
+  },"31": {
     "doc": "Resource Forks",
     "title": "Historical Use",
     "content": "Prior to Mac OS X, programs on the Mac make heavy use of the resource fork. For example, an application’s resource fork contains 68K code, icons, dialog box layouts, version information, text data, and sometimes various custom data types. PowerPC code is stored in the data fork, although various resources are still necessary for PowerPC applications to run correctly. Applications also use resource forks in other files to store data. Some text editors use the resource fork of a text file to remember the state of the text editor when editing that file. Games often use files with resource forks to store images, sound effects, or level data. Starting with Mac OS X, data that was previously stored as resources in the resource fork are stored as a separate file instead. For example, application and file icons prior to Mac OS X are stored in the resource fork, but in Mac OS X, each icon is stored as a separate file. It is unusual to find a Mac OS X program that uses the resource fork at all. ",
     "url": "https://depp.github.io/syncfiles/tech/resource-forks#historical-use",
     "relUrl": "/tech/resource-forks#historical-use"
-  },"26": {
+  },"32": {
     "doc": "Resource Forks",
     "title": "Are Resource Forks Really Structured?",
     "content": "Note the key words above: a resource fork is almost always organized into chunks called resources. A file’s resource fork is really just an alternate stream of data, like the data fork. You can put whatever data you like in the resource fork. In practice, the resource fork almost always uses a specific format. Note that this goes both ways. Just like you can store arbitrary data in the resource fork, you can also use the data fork to store resources. Using the data fork to store resources has disadvantages, because you can’t edit those resources with ResEdit or use the Macintosh resource manager API to read those resources, so it is rarely done. Some applications store application preferences or other data in the resource fork of a file, and because resource forks can get corrupted, you occasionally see a backup copy of the resource fork stored in the data fork of the same file. This is not common, however. ",
     "url": "https://depp.github.io/syncfiles/tech/resource-forks#are-resource-forks-really-structured",
     "relUrl": "/tech/resource-forks#are-resource-forks-really-structured"
-  },"27": {
+  },"33": {
     "doc": "Resource Forks",
     "title": "Preserving Resource Forks",
     "content": "Resource forks do not always need to be preserved when synchronizing files between systems. It depends on the file and what is being stored in the resource fork. For example, when you save a text file in BBEdit or MPW, the editor state is recorded as a resource in the text file. Deleting this resource fork doesn’t affect your ability to use the file. On the other hand, if you delete the resource fork of an application, it won’t work at all. ",
     "url": "https://depp.github.io/syncfiles/tech/resource-forks#preserving-resource-forks",
     "relUrl": "/tech/resource-forks#preserving-resource-forks"
-  },"28": {
+  },"34": {
     "doc": "Resource Forks",
     "title": "Examining the Resource Fork",
     "content": "You can use ResEdit or Resorcerer to view and edit the resources in a resource fork, or the MPW tools Rez and DeRez. ResEdit is the most common tool to use, because it’s free (unlike Resorcerer, which costs $256) and has a nice user interface (unlike Rez and DeRez, which convert resource files to and from text files). ResEdit is available from Apple and the latest version is 2.1.3. Here’s what the resource fork of the MacBinary application looks like in ResEdit: . When you open a file in ResEdit, ResEdit shows you an overview of the different types of resources in the file. MacBinary contains 18 different types of resources. When you open one of the types, ResEdit shows you a list of resources for that type. For example, we can look at the CODE resources in MacBinary, which contain segments of executable 68K code which can be independently loaded. Each individual resource has an ID, which is a signed 16-bit number, and optionally has a name. ResEdit provides simple editors for certain types of resources, like icons. This makes it easy to create your own custom icons for Macintosh applications. You didn’t have to be a programmer to take advantage of this—if you wanted to create your own custom folder icons for certain folders, you could do that too. You could find custom icon collections online or on CDs bundled with magazines. Application and folder icons are made from several types of icons with the same ID number, creating an icon family. An icon family allows you to create custom icons for different sizes and color depths. Another common type of resource is string resources. Applications sometimes store strings used by the application in these resources. This might be done to reduce the memory footprint of the application, or it might be done to make it easier to translate an application into another language. It’s not necessary to use string resources at all, and MacBinary doesn’t contain any string resources. There are string resources in SimpleText, however, containing help messages, error messages, and various other strings. ",
     "url": "https://depp.github.io/syncfiles/tech/resource-forks#examining-the-resource-fork",
     "relUrl": "/tech/resource-forks#examining-the-resource-fork"
-  },"29": {
+  },"35": {
     "doc": "Safe Saving",
     "title": "Safe Saving",
     "content": "There are a number of different goals for when your program saves a file: . | I/O errors should be reported. If the data does not make it to disk, then tell the user that the operation failed. | Saves are atomic. After saving, you either get the old version of the file or the complete new version of the file. If your program crashes, it’s okay if the old file is untouched, but it’s not okay if it’s been partially overwritten. | Saves preserve file references. Any references to a document (aliases or bookmarks) remain valid after modifying the document. | Saves do not change the creation date, or other metadata associated with the file. | . If your first thought is, “that sounds like it could be complicated”, then you’re in good company. Theodore Ts’o wrote an article in 2009, Don’t fear the fsync! which covers some of these issues on Linux in detail. ",
     "url": "https://depp.github.io/syncfiles/tech/safe-saving",
     "relUrl": "/tech/safe-saving"
-  },"30": {
+  },"36": {
     "doc": "Safe Saving",
     "title": "Classic Mac OS",
     "content": "HFS and HFS+ support an operation which exchanges the contents of files. The high-level API call looks like this: . OSErr FSpExchangeFiles( const FSSpec * source, const FSSpec * dest); . This function exchanges the contents of the two files (both forks), and exchanges the modification dates, but leaves the other metadata alone. The recipe for safe saving on HFS volumes is: . | Save the document to a temporary file on the same volume. | Exchange the contents of the original file and the temporary file with FSpExchangeFiles. | . You can test that FSpExchangeFiles is supported by a volume by getting the volume parameters. Not all filesystems support this operation. ",
     "url": "https://depp.github.io/syncfiles/tech/safe-saving#classic-mac-os",
     "relUrl": "/tech/safe-saving#classic-mac-os"
-  },"31": {
+  },"37": {
     "doc": "Safe Saving",
     "title": "Mac OS X",
     "content": "Mac OS X provides a Unix system call that provides the same functionality as FSpExchangeFiles, but with a Unix API. int exchangedata( const char * path1 const char * path2, unsigned int options); . However, this function does not work on APFS. ",
     "url": "https://depp.github.io/syncfiles/tech/safe-saving#mac-os-x",
     "relUrl": "/tech/safe-saving#mac-os-x"
-  },"32": {
+  },"38": {
     "doc": "Safe Saving",
     "title": "Mac OS X 10.6+",
     "content": "Starting on Mac OS X 10.6, the Foundation framework provides a method for safely replacing an item on the filesystem with a new item. This method is present on NSFileManager: . - (BOOL)replaceItemAtURL:(NSURL *)originalItemURL withItemAtURL:(NSURL *)newItemURL backupItemName:(NSString *)backupItemName options:(NSFileManagerItemReplacementOptions)options resultingItemURL:(NSURL * _Nullable *)resultingURL error:(NSError * _Nullable *)error; . This method should be preferred for Mac OS X 10.6 and newer. Unlike exchangedata(), this function works on APFS. ",
