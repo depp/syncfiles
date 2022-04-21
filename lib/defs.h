@@ -3,34 +3,30 @@
 // Mozilla Public License, version 2.0. See LICENSE.txt for details.
 #ifndef LIB_DEFS_H
 #define LIB_DEFS_H
-/* defs.h - common definitions. */
+// defs.h - common definitions.
 
-/*==============================================================================
-Target information
-==============================================================================*/
+// =============================================================================
+// Target information
+// =============================================================================
 
 /*
-  Note that this code does not need to be especially portable. It just runs on
-  Mac OS and development systems (for testing). We can assume that the
-  development system has GCC.
+	Macros we care about:
 
-  Macros we care about:
+	TARGET_OS_MAC             OS is some Macintosh variant (broadly speaking)
+	TARGET_API_MAC_OS8        Targeting classic Mac OS (9.x and earlier)
 
-  TARGET_OS_MAC             OS is some Macintosh variant (broadly speaking)
-  TARGET_API_MAC_OS8        Targeting classic Mac OS (9.x and earlier)
-
-  TARGET_RT_LITTLE_ENDIAN   Little-endian byte order
-  TARGET_RT_BIG_ENDIAN      Big-endian byte order
+	TARGET_RT_LITTLE_ENDIAN   Little-endian byte order
+	TARGET_RT_BIG_ENDIAN      Big-endian byte order
 */
 #if macintosh
 
-/* Classic Mac OS. Header is part of Universal Interfaces & Carbon. */
+// Classic Mac OS. Header is part of Universal Interfaces & Carbon.
 #include <ConditionalMacros.h>
 
 #elif __APPLE__
 
-/* Newer apple systems, including macOS >= 10. Header is in /usr/include, or
-   within /usr/include inside the SDK. */
+// Newer apple systems, including macOS >= 10. Header is in /usr/include, or
+// within /usr/include inside the SDK.
 #include <TargetConditionals.h>
 
 #else
@@ -51,9 +47,9 @@ Target information
 
 #endif
 
-/*==============================================================================
-Basic types
-==============================================================================*/
+// =============================================================================
+// Basic types
+// =============================================================================
 
 #if TARGET_API_MAC_OS8
 
@@ -61,7 +57,7 @@ Basic types
 
 #else
 
-/* Include <stddef.h> for NULL */
+// Include <stddef.h> for NULL.
 #include <stddef.h>
 #include <stdint.h>
 
@@ -85,6 +81,8 @@ typedef uint16_t UInt16;
 typedef int16_t SInt16;
 typedef uint32_t UInt32;
 typedef int32_t SInt32;
+typedef uint64_t UInt64;
+typedef int64_t SInt64;
 
 typedef char *Ptr;
 typedef Ptr *Handle;
@@ -92,28 +90,35 @@ typedef long Size;
 
 #endif
 
-/*==============================================================================
-Error codes and error reporting
-==============================================================================*/
+// =============================================================================
+// Error codes and error reporting
+// =============================================================================
 
-/* Error codes. */
+// Error codes.
 typedef enum {
-	/* No error. */
+	// No error (success). Equal to 0.
 	kErrorOK,
 
-	/* Memory allocation failed. */
+	// Memory allocation failed.
 	kErrorNoMemory,
 
-	/* Invaild table data. */
+	// Invaild table data.
 	kErrorBadData,
 
-	/* Too many files in one directory. */
+	// Too many files in one directory.
 	kErrorDirectoryTooLarge
 } ErrorCode;
 
-/*==============================================================================
-Memory allocation
-==============================================================================*/
+// =============================================================================
+// Memory allocation
+// =============================================================================
+
+/*
+	These functions are used to work with memory from code that runs on both
+	classic Mac OS systems and newer systems. Memory can be tight on very old
+	Mac systems, and to make the most of it, we only relocatable blocks of
+	memory (handles) whenever possible.
+*/
 
 #if TARGET_API_MAC_OS8
 
@@ -121,23 +126,23 @@ Memory allocation
 
 #else
 
-/* Allocate a relocatable block of memory. */
+// Allocate a relocatable block of memory.
 Handle NewHandle(Size byteSize);
 
-/* Free a relocatable block of memory. */
+// Free a relocatable block of memory.
 void DisposeHandle(Handle h);
 
 #endif
 
-/* Resize a relocatable block of memory. Return true on success. */
+/// Resize a relocatable block of memory. Return true on success.
 Boolean ResizeHandle(Handle h, Size newSize);
 
-/* Fill memory with zeroes. */
+// Fill memory with zeroes.
 void MemClear(void *ptr, Size size);
 
-/*==============================================================================
-Assertions
-==============================================================================*/
+// =============================================================================
+// Assertions
+// =============================================================================
 
 #if NDEBUG
 #define assert(x) ((void)0)

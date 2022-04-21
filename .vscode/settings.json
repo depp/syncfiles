@@ -3,6 +3,9 @@
   "editor.detectIndentation": false,
   "editor.tabSize": 4,
   "editor.insertSpaces": false,
+  "files.associations": {
+    "*.h": "c"
+  },
   "[starlark]": {
     "editor.insertSpaces": true
   },
