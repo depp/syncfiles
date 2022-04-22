@@ -6,6 +6,7 @@
 /* convert.h - character set conversion routines. */
 
 #include "lib/defs.h"
+#include "lib/error.h"
 
 enum {
 	/* Constants for CR and LF. Note that we should not use '\n' or '\r'

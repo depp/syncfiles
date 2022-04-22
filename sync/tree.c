@@ -3,6 +3,8 @@
 // Mozilla Public License, version 2.0. See LICENSE.txt for details.
 #include "sync/tree.h"
 
+#include "lib/error.h"
+
 #include <stdio.h>
 
 #define GetNode(nodes, ref) ((nodes) + (ref)-1)

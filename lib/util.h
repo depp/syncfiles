@@ -3,7 +3,7 @@
 // Mozilla Public License, version 2.0. See LICENSE.txt for details.
 #ifndef LIB_UTIL_H
 #define LIB_UTIL_H
-#include "lib/defs.h"
+#include "lib/error.h"
 
 // Print an error message and exit.
 void Fatalf(const char *msg, ...)

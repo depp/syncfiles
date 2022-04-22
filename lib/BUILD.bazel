@@ -12,6 +12,7 @@ cc_library(
         "crc32.h",
         "defs.h",
         "endian.h",
+        "error.h",
         "util.h",
     ],
     copts = COPTS,

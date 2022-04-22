@@ -91,25 +91,6 @@ typedef long Size;
 #endif
 
 // =============================================================================
-// Error codes and error reporting
-// =============================================================================
-
-// Error codes.
-typedef enum {
-	// No error (success). Equal to 0.
-	kErrorOK,
-
-	// Memory allocation failed.
-	kErrorNoMemory,
-
-	// Invaild table data.
-	kErrorBadData,
-
-	// Too many files in one directory.
-	kErrorDirectoryTooLarge
-} ErrorCode;
-
-// =============================================================================
 // Memory allocation
 // =============================================================================
 

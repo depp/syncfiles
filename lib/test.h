@@ -6,6 +6,7 @@
 // test.h - unit testing definitions.
 
 #include "lib/defs.h"
+#include "lib/error.h"
 
 // The number of test failures.
 extern int gFailCount;
