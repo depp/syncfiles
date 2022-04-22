@@ -1,26 +1,27 @@
 // Copyright 2022 Dietrich Epp.
 // This file is part of SyncFiles. SyncFiles is licensed under the terms of the
 // Mozilla Public License, version 2.0. See LICENSE.txt for details.
-/* convert_1r.c - Reverse conversion from UTF-8 to extended ASCII. */
+
+// convert_1r.c - Reverse conversion from UTF-8 to extended ASCII.
 #include "convert/convert.h"
 #include "lib/defs.h"
 
 enum {
-	/* Maximum length of encoded character. */
+	// Maximum length of encoded character.
 	kMaxEncodedLength = 8,
 
-	/* Initial number of nodes to allocate when building the tree. */
+	// Initial number of nodes to allocate when building the tree.
 	kInitialTableAlloc = 8
 };
 
 struct TEntry {
-	/* The output character, or zero if no output. */
+	// The output character, or zero if no output.
 	UInt8 output;
-	/* The next node, or zero if no next node. */
+	// The next node, or zero if no next node.
 	UInt8 next;
 };
 
-/* A node for building the converter. */
+// A node for building the converter.
 struct TNode {
 	struct TEntry entries[256];
 };
@@ -36,10 +37,10 @@ static ErrorCode CreateTree(struct TTree *tree, Handle data, Size datasz)
 	int i, j, dpos, enclen, encend, state, cur, nodecount, nodealloc;
 	unsigned ch;
 
-	/* Create a tree with a root node mapping all the ASCII characters except
-	   NUL, CR, and LF. NUL won't map because an output of 0 is interpreted as
-	   no output. CR and LF are removed so they can be handled specially be the
-	   decoder. */
+	// Create a tree with a root node mapping all the ASCII characters except
+	// NUL, CR, and LF. NUL won't map because an output of 0 is interpreted as
+	// no output. CR and LF are removed so they can be handled specially be the
+	// decoder.
 	nodes =
 		(struct TNode **)NewHandle(kInitialTableAlloc * sizeof(struct TNode));
 	if (nodes == NULL) {
@@ -55,11 +56,11 @@ static ErrorCode CreateTree(struct TTree *tree, Handle data, Size datasz)
 	node->entries[kCharLF].output = 0;
 	node->entries[kCharCR].output = 0;
 
-	/* Parse the table data and build up a tree of TNode. */
+	// Parse the table data and build up a tree of TNode.
 	dpos = 1;
-	/* For each high character (128..255). */
+	// For each high character (128..255).
 	for (i = 0; i < 128; i++) {
-		/* For each encoding of that character. */
+		// For each encoding of that character.
 		for (j = 0; j < 2; j++) {
 			if (dpos >= datasz) {
 				goto bad_table;
@@ -70,8 +71,8 @@ static ErrorCode CreateTree(struct TTree *tree, Handle data, Size datasz)
 				    enclen > kMaxEncodedLength) {
 					goto bad_table;
 				}
-				/* Iterate over all but last byte in encoding, to find the node
-				   which will produce the decoded byte as output. */
+				// Iterate over all but last byte in encoding, to find the node
+				// which will produce the decoded byte as output.
 				state = 0;
 				node = *nodes;
 				for (encend = dpos + enclen - 1; dpos < encend; dpos++) {
@@ -129,11 +130,11 @@ struct CEntry {
 	UInt16 next;
 };
 
-/* A compressed table node. Followed by an array of centry. */
+// A compressed table node. Followed by an array of centry.
 struct CNode {
-	/* First byte in table. */
+	// First byte in table.
 	UInt8 base;
-	/* Number of entries in table, minus one. */
+	// Number of entries in table, minus one.
 	UInt8 span;
 };
 
@@ -147,7 +148,7 @@ static ErrorCode CompactTree(Handle *out, struct TNode **nodes, int nodecount)
 	int i, j, min, max, count, next;
 	unsigned offset;
 
-	/* Figure out where each compacted node will go. */
+	// Figure out where each compacted node will go.
 	infos = (struct NodeInfo **)NewHandle(sizeof(struct NodeInfo) * nodecount);
 	if (infos == NULL) {
 		return kErrorNoMemory;
@@ -171,7 +172,7 @@ static ErrorCode CompactTree(Handle *out, struct TNode **nodes, int nodecount)
 		offset += sizeof(struct CNode) + count * sizeof(struct CEntry);
 	}
 
-	/* Create the compacted tree. */
+	// Create the compacted tree.
 	ctree = NewHandle(offset);
 	if (ctree == NULL) {
 		DisposeHandle((Handle)infos);
@@ -249,7 +250,7 @@ next_out:
 		goto done;
 	}
 
-	/* Follow state machine to the end. */
+	// Follow state machine to the end.
 	savein = ipos;
 	saveout = 0;
 	toffset = 0;
@@ -274,7 +275,7 @@ resume:
 		output = entry->output;
 		toffset = entry->next;
 		if (toffset == 0) {
-			/* Reached end of tree. */
+			// Reached end of tree.
 			if (output == 0) {
 				goto bad_char;
 			}
@@ -282,9 +283,8 @@ resume:
 			goto next_out;
 		}
 		if (output != 0) {
-			/* Can produce output here, or can consume more input. We try
-			    consuming more input, but save the state to rewind if that
-			    fails. */
+			// Can produce output here, or can consume more input. We try
+			// consuming more input, but save the state to rewind if that fails.
 			savein = ipos;
 			saveout = output;
 			savetoffset = toffset;
@@ -292,20 +292,19 @@ resume:
 	}
 
 bad_char:
-	/* Bad character. Back up and try again. */
+	// Bad character. Back up and try again.
 	ipos = savein;
 	if (saveout != 0) {
-		/* Produce saved output. */
+		// Produce saved output.
 		*opos++ = saveout;
 		ch = 0;
 	} else {
-		/* No saved output, this really is a bad character. Consume one
-		   UTF-8 character, emit it as a fallback, and continue. */
+		// No saved output, this really is a bad character. Consume one UTF-8
+		// character, emit it as a fallback, and continue.
 		ch = *ipos++;
 		if ((ch & 0x80) == 0) {
-			/* ASCII character: either NUL, CR, or LF, because only
-			   these
-			   characters will result in a transition to state 0. */
+			// ASCII character: either NUL, CR, or LF, because only these
+			// characters will result in a transition to state 0.
 			if (ch == 0) {
 				*opos++ = ch;
 			} else if (ch == kCharLF && lastch == kCharCR) {

@@ -112,7 +112,7 @@ static void TestConverter(const char *name, struct CharmapData data)
 
 	SetTestName(name);
 
-	/* Load the converter into memory and build the conversion table. */
+	// Load the converter into memory and build the conversion table.
 	datap = (void *)data.ptr;
 	datah = &datap;
 	err = ConverterBuild(&cf, datah, data.size, kToUTF8);
@@ -126,7 +126,7 @@ static void TestConverter(const char *name, struct CharmapData data)
 		goto done;
 	}
 
-	/* Create sample data to convert: 0-255, followed by 0. */
+	// Create sample data to convert: 0-255, followed by 0.
 	len0 = 257;
 	ptr = gBuffer[0];
 	for (i = 0; i < 256; i++) {
@@ -134,7 +134,7 @@ static void TestConverter(const char *name, struct CharmapData data)
 	}
 	ptr[256] = 0;
 
-	/* Convert sample data. */
+	// Convert sample data.
 	iptr = gBuffer[0];
 	iend = iptr + 257;
 	optr = gBuffer[1];
@@ -147,8 +147,8 @@ static void TestConverter(const char *name, struct CharmapData data)
 	}
 	len1 = optr - gBuffer[1];
 
-	/* Convert back, in three calls. The middle call will be to a 1-4 byte slice
-	   in the middle. */
+	// Convert back, in three calls. The middle call will be to a 1-4 byte slice
+	// in the middle.
 	for (i = 1; i < len1 - 2; i++) {
 		jmax = len1 - i;
 		if (jmax > 4) {
@@ -182,8 +182,8 @@ static void TestConverter(const char *name, struct CharmapData data)
 	for (k = 0; k < 2; k++) {
 		cc = k == 0 ? cf : cr;
 		for (i = 0; i < 4; i++) {
-			len1 = lblen[0]; /* Input data */
-			len0 = lblen[i]; /* Expected output */
+			len1 = lblen[0]; // Input data
+			len0 = lblen[i]; // Expected output
 			for (j = 1; j < len1; j++) {
 				SetTestNamef("%s %s linebreak %s split=%d", name,
 				             k == 0 ? "forward" : "backward", kLineBreakName[i],

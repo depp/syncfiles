@@ -1,13 +1,14 @@
 // Copyright 2022 Dietrich Epp.
 // This file is part of SyncFiles. SyncFiles is licensed under the terms of the
 // Mozilla Public License, version 2.0. See LICENSE.txt for details.
-/* convert_1f.c - Forward conversion from extended ASCII to UTF-8. */
+
+// convert_1f.c - Forward conversion from extended ASCII to UTF-8.
 #include "convert/convert.h"
 #include "lib/defs.h"
 
 struct Convert1fData {
-	/* Unicode characters, encoded in UTF-8, and packed MSB first. Always either
-	   2 bytes or 3 bytes. */
+	// Unicode characters, encoded in UTF-8, and packed MSB first. Always either
+	// 2 bytes or 3 bytes.
 	UInt32 chars[128];
 };
 
@@ -81,7 +82,7 @@ void Convert1fRun(const void *cvtptr, LineBreakConversion lc,
 		ch = *ipos++;
 		if (ch < 128) {
 			if (ch == kCharLF || ch == kCharCR) {
-				/* Line breaks. */
+				// Line breaks.
 				if (ch == kCharLF && lastch == kCharCR) {
 					if (lc == kLineBreakKeep) {
 						*opos++ = ch;
@@ -104,11 +105,11 @@ void Convert1fRun(const void *cvtptr, LineBreakConversion lc,
 					}
 				}
 			} else {
-				/* ASCII characters. */
+				// ASCII characters.
 				*opos++ = ch;
 			}
 		} else {
-			/* Unicode characters. */
+			// Unicode characters.
 			uch = cvt->chars[ch - 128];
 			if (uch > 0xffff) {
 				opos[0] = uch >> 16;
