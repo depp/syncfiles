@@ -5,6 +5,7 @@ cc_library(
     name = "lib",
     srcs = [
         "crc32.c",
+        "strbuf.c",
         "toolbox.c",
         "util.c",
     ],
@@ -13,6 +14,7 @@ cc_library(
         "defs.h",
         "endian.h",
         "error.h",
+        "strbuf.h",
         "util.h",
     ],
     copts = COPTS,
@@ -53,6 +55,18 @@ cc_test(
     size = "small",
     srcs = [
         "crc32_test.c",
+    ],
+    copts = COPTS,
+    deps = [
+        ":lib",
+    ],
+)
+
+cc_test(
+    name = "strbuf_test",
+    size = "small",
+    srcs = [
+        "strbuf_test.c",
     ],
     copts = COPTS,
     deps = [
