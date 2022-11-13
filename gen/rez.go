@@ -61,7 +61,7 @@ func writeRez(d *scriptdata, filename string) error {
 	writeStrings(w, `rSTRS_Regions, "Regions"`, constStrings(&d.regions))
 	for i, cm := range d.charmaps {
 		if cm.filename != "" {
-			fmt.Fprintf(w, "read 'cmap' (%d, %q) %q;\n", 128+i, cm.name, cm.filename)
+			fmt.Fprintf(w, "read 'cmap' (%d, %q) %q;\n", 128+i, cm.name, "charmap_"+cm.filename+".dat")
 		}
 	}
 
