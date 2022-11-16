@@ -24,7 +24,7 @@ void Failf(const char *msg, ...) __attribute__((format(printf, 1, 2)));
 // invalid.
 const char *ErrorDescriptionOrDie(ErrorCode err);
 
-// Print information about completed tests and return the status code. 
+// Print information about completed tests and return the status code.
 int TestsDone(void);
 
 #endif

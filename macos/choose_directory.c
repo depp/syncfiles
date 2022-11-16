@@ -1,11 +1,11 @@
 // Copyright 2022 Dietrich Epp.
 // This file is part of SyncFiles. SyncFiles is licensed under the terms of the
 // Mozilla Public License, version 2.0. See LICENSE.txt for details.
-#include "choose_directory.h"
+#include "macos/choose_directory.h"
 
-#include "error.h"
-#include "resources.h"
-#include "strutil.h"
+#include "macos/error.h"
+#include "macos/resources.h"
+#include "macos/strutil.h"
 
 #include <string.h>
 

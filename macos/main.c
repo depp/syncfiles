@@ -1,11 +1,11 @@
 // Copyright 2022 Dietrich Epp.
 // This file is part of SyncFiles. SyncFiles is licensed under the terms of the
 // Mozilla Public License, version 2.0. See LICENSE.txt for details.
-#include "main.h"
+#include "macos/main.h"
 
-#include "error.h"
-#include "project.h"
-#include "resources.h"
+#include "macos/error.h"
+#include "macos/project.h"
+#include "macos/resources.h"
 
 #ifndef __MWERKS__
 // Link error if defined with CodeWarrior.

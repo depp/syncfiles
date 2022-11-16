@@ -4,18 +4,14 @@
 #ifndef MACOS_ERROR_H
 #define MACOS_ERROR_H
 
-// Error codes, corresponding to messages in a STR# resource.
+// Error codes, corresponding to messages in a STR# resource. This should be
+// kept in sync with STR# rSTRS_Errors in resources.r.
 typedef enum {
 	kErrUnknown = 1,
 	kErrInternal,
 	kErrOutOfMemory,
 	kErrCouldNotSaveProject,
 } ErrorCode;
-
-struct Error {
-	ErrorCode code;
-	short osErr;
-};
 
 // Show an error dialog with the given error message, then quit the program.
 void ExitError(ErrorCode errCode);
@@ -41,7 +37,7 @@ void ExitAssert(const unsigned char *file, int line,
 
 struct ErrorParams {
 	ErrorCode err;
-	OSErr osErr;
+	short osErr;
 	const unsigned char *strParam;
 };
 

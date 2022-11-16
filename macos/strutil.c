@@ -1,9 +1,9 @@
 // Copyright 2022 Dietrich Epp.
 // This file is part of SyncFiles. SyncFiles is licensed under the terms of the
 // Mozilla Public License, version 2.0. See LICENSE.txt for details.
-#include "strutil.h"
+#include "macos/strutil.h"
 
-#include "error.h"
+#include "macos/error.h"
 
 #include <NumberFormatting.h>
 

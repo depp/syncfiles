@@ -1,17 +1,17 @@
 // Copyright 2022 Dietrich Epp.
 // This file is part of SyncFiles. SyncFiles is licensed under the terms of the
 // Mozilla Public License, version 2.0. See LICENSE.txt for details.
-#include "project.h"
+#include "macos/project.h"
 
-#include "choose_directory.h"
-#include "crc32.h"
-#include "error.h"
-#include "main.h"
-#include "path.h"
-#include "resources.h"
-#include "tempfile.h"
+#include "lib/crc32.h"
+#include "macos/choose_directory.h"
+#include "macos/error.h"
+#include "macos/main.h"
+#include "macos/path.h"
+#include "macos/resources.h"
+#include "macos/strutil.h"
+#include "macos/tempfile.h"
 
-#include <Files.h>
 #include <MacMemory.h>
 #include <MacWindows.h>
 
@@ -23,44 +23,42 @@ Project format:
 Header:
 byte[32]	magic
 uint32		version
-uint32		file size
-uint32		data crc32
+uint32		header length
+uint32		header crc32
 uint32		chunk count
 ckinfo[]	chunk info
 byte[]		chunk data
 
 Chunk info:
-byte[8]		chunk name
+uint32		chunk ID
 uint32		byte offset
 uint32		byte length
+uint32		chunk crc32
 
 Chunks: (names zero-padded)
-"s.alias"	source directory alias
-"d.alias"	destination directory alias
+"LOCA"	local directory alias
+"REMA"	destination directory alias
 
 Chunks are aligned to 16 byte boundaries, and the file is padded to a 16 byte
 boundary. This is just to make it easier to read hexdumps.
 */
 
+#define kVersion 0x10000
+
 // clang-format off
 
 // Magic cookie that identifies project files.
-static const kMagic[32] = {
+static const unsigned char kMagic[32] = {
 	// Identify the file type.
-	'S', 'y', 'n', 'c', 'F', 'i', 'l', 'e', 's', ' ',
-	'P', 'r', 'o', 'j', 'e', 'c', 't',
+	'S', 'y', 'n', 'c', 'F', 'i', 'l', 'e', 's',
+	' ', 'P', 'r', 'o', 'j', 'e', 'c', 't',
 	// Detect newline conversions.
 	0, 10, 0, 13, 0, 13, 10, 0,
 	// Detect encoding conversions (infinity in Roman and UTF-8).
-	0xb0, 0, 0xe2, 0x88, 0x9e, 0, 0,
+	0xb0, 0, 0xe2, 0x88, 0x9e, 0, 0
 };
 
 // clang-format on
-
-static const kChunkAlias[2][8] = {
-	{'l', '.', 'a', 'l', 'i', 'a', 's', 0},
-	{'r', '.', 'a', 'l', 'i', 'a', 's', 0},
-};
 
 struct ProjectHeader {
 	UInt8 magic[32];
@@ -71,9 +69,10 @@ struct ProjectHeader {
 };
 
 struct ProjectChunk {
-	UInt8 name[8];
+	UInt32 id;
 	UInt32 offset;
 	UInt32 size;
+	UInt32 crc32;
 };
 
 // Dimensions of controls.
@@ -81,11 +80,6 @@ enum {
 	kVBorder = 10,
 	kHBorder = 10,
 	kDirVSize = 62,
-};
-
-enum {
-	// Base ID for aliases.
-	rAliasBase = 128,
 };
 
 enum {
@@ -110,9 +104,15 @@ struct Project {
 	int windowWidth;
 	int isActive;
 
-	// File reference to the project file, or fileRef == 0 if file not saved.
+	// File reference to the project file, or fileRef == 0 otherwise.
 	short fileRef;
+	// Location of the project file, if vRefNum != 0. In a possible edge case,
+	// the fileSpec may be set even when fileRef is 0. This may happen if you
+	// save the project to a volume which does not support FSpExchangeFiles(),
+	// and the operation fails.
 	FSSpec fileSpec;
+	// Script code for the filename.
+	ScriptCode fileScript;
 
 	struct ProjectDir dirs[2];
 };
@@ -174,9 +174,6 @@ static void ProjectClose(WindowRef window, ProjectHandle project)
 	DisposeWindow(window);
 	HLock((Handle)project);
 	projectp = *project;
-	if (projectp->fileRef != 0) {
-		FSClose(projectp->fileRef);
-	}
 	for (i = 0; i < 2; i++) {
 		if (projectp->dirs[i].path != NULL) {
 			DisposeHandle(projectp->dirs[i].path);
@@ -185,231 +182,299 @@ static void ProjectClose(WindowRef window, ProjectHandle project)
 	DisposeHandle((Handle)project);
 }
 
-#define kHeaderSize 48
-#define kChunkInfoSize 16
 #define kChunkCount 2
 
 #define ALIGN(x) (((x) + 15) + ~(UInt32)15)
 
-struct ProjectData {
-	Handle data;
-	Size size;
-};
-
-static OSErr ProjectMarshal(ProjectHandle project, struct ProjectData *datap)
+static OSErr ProjectWriteHeader(short refNum, int nchunks,
+                                struct ProjectChunk *ckInfo)
 {
-	struct ProjectChunk ckInfo[kChunkCount];
-	Handle ckData[kChunkCount];
-	UInt32 size, pos, ckOff, ckSize;
-	Handle h;
-	int i;
-	struct ProjectHeader *hdr;
+	Ptr ptr;
+	struct ProjectHeader *head;
+	UInt32 size;
+	long count;
+	OSErr err;
 
-	size = kHeaderSize + kChunkCount * kChunkInfoSize;
-	for (i = 0; i < 2; i++) {
-		h = (Handle)(*project)->dirs[i].alias;
-		ckSize = GetHandleSize(h);
-		memcpy(ckInfo[i].name, kChunkAlias[i], 8);
-		ckInfo[i].offset = size;
-		ckInfo[i].size = ckSize;
-		ckData[i] = h;
-		size = ALIGN(size + ckSize);
-	}
-
-	h = NewHandle(size);
-	if (h == NULL) {
+	size = sizeof(struct ProjectHeader) + sizeof(struct ProjectChunk) * nchunks;
+	ptr = NewPtr(size);
+	if (ptr == NULL) {
 		return MemError();
 	}
-	hdr = (void *)*h;
-	memcpy(hdr->magic, kMagic, sizeof(kMagic));
-	hdr->version = 0x10000;
-	hdr->size = size;
-	hdr->chunkCount = kChunkCount;
-	memcpy(*h + kHeaderSize, ckInfo, sizeof(ckInfo));
-	pos = kHeaderSize + kChunkCount * kChunkInfoSize;
-	for (i = 0; i < kChunkCount; i++) {
-		ckOff = ckInfo[i].offset;
-		ckSize = ckInfo[i].size;
-		memset(*h + pos, 0, ckOff - pos);
-		memcpy(*h + ckOff, *ckData[i], ckSize);
-		pos = ckOff + ckSize;
-	}
-	memcpy(*h + pos, 0, size - pos);
+	head = (struct ProjectHeader *)ptr;
+	memcpy(head->magic, kMagic, sizeof(head->magic));
+	head->version = kVersion;
+	head->size = size;
+	head->crc32 = 0;
+	head->chunkCount = nchunks;
+	memcpy(ptr + sizeof(struct ProjectHeader), ckInfo,
+	       nchunks * sizeof(struct ProjectChunk));
+	head->crc32 = CRC32Update(0, ptr, size);
 
-	datap->data = h;
-	datap->size = size;
+	count = size;
+	err = FSWrite(refNum, &count, ptr);
+	DisposePtr(ptr);
+	return err;
+}
+
+static const UInt32 kProjectAliasChunks[2] = {'LOCA', 'REMA'};
+
+static OSErr ProjectFlush(short refNum)
+{
+	ParamBlockRec pb;
+
+	memset(&pb, 0, sizeof(pb));
+	pb.ioParam.ioRefNum = refNum;
+	return PBFlushFileSync(&pb);
+}
+
+// ProjectWriteContent writes the project data to the given file.
+static OSErr ProjectWriteContent(ProjectHandle project, short refNum)
+{
+	UInt32 pad[4];
+	OSErr err;
+	Handle ckData[kChunkCount];
+	struct ProjectChunk ckInfo[kChunkCount];
+	UInt32 off;
+	Size size;
+	Handle h;
+	int i, nchunks;
+	long count;
+
+	// Gather all chunks.
+	nchunks = 0;
+	for (i = 0; i < 2; i++) {
+		h = (Handle)(*project)->dirs[i].alias;
+		if (h != NULL) {
+			ckData[nchunks] = h;
+			ckInfo[nchunks].id = kProjectAliasChunks[i];
+			nchunks++;
+		}
+	}
+
+	// Calculate chunk offsets.
+	off = sizeof(struct ProjectHeader) + sizeof(struct ProjectChunk) * nchunks;
+	for (i = 0; i < nchunks; i++) {
+		size = GetHandleSize(ckData[i]);
+		ckInfo[i].offset = off;
+		ckInfo[i].size = size;
+		ckInfo[i].crc32 = CRC32Update(0, *ckData[i], size);
+		off = ALIGN(off + size);
+	}
+
+	// Write file. Refer to IM: Files listing 1-9, page 1-24.
+	err = SetEOF(refNum, off);
+	if (err != noErr) {
+		return err;
+	}
+	err = ProjectWriteHeader(refNum, nchunks, ckInfo);
+	if (err != noErr) {
+		return err;
+	}
+	for (i = 0; i < 4; i++) {
+		pad[i] = 0;
+	}
+	for (i = 0; i < nchunks; i++) {
+		size = ckInfo[i].size;
+		count = size;
+		err = FSWrite(refNum, &count, *ckData[i]);
+		if (err != noErr) {
+			return err;
+		}
+		count = (-size) & 15;
+		if (count > 0) {
+			err = FSWrite(refNum, &count, pad);
+			if (err != noErr) {
+				return err;
+			}
+		}
+	}
+
 	return noErr;
 }
 
-// Prompt the user for a location to save the project.
-static void ProjectSaveAs(WindowRef window, ProjectHandle project)
+// A SaveMode describes the exact type of save operation.
+typedef enum {
+	// kSaveNew indicates that the file is new, it does not exist yet.
+	kSaveNew,
+	// kSaveReplace indicates that the file is being saved over an existing
+	// file.
+	kSaveReplace,
+	// kSaveUpdate indicates that the file is being updated in-place.
+	kSaveUpdate
+} SaveMode;
+
+// ProjectCloseFile closes any open files and sets the file ref to 0.
+static void ProjectCloseFile(ProjectHandle project)
 {
-	// See listing 1-12 in IM: Files. This has some differences.
+	struct Project *projectp;
+
+	projectp = *project;
+	if (projectp->fileRef != 0) {
+		FSClose(projectp->fileRef);
+	}
+}
+
+// ProjectSetFile closes any open files and replaces them with the given file.
+static void ProjectSetFile(ProjectHandle project, short fileRef, FSSpec *spec)
+{
+	struct Project *projectp;
+
+	projectp = *project;
+	if (projectp->fileRef != 0) {
+		FSClose(projectp->fileRef);
+	}
+	projectp->fileRef = fileRef;
+	memcpy(&projectp->fileSpec, spec, sizeof(FSSpec));
+}
+
+// ProjectWrite writes the project to a file.
+static OSErr ProjectWrite(ProjectHandle project, FSSpec *spec,
+                          ScriptCode script, SaveMode mode)
+{
+	HParamBlockRec hb;
+	CMovePBRec cm;
+	FSSpec temp;
+	OSErr err;
+	short refNum;
+
+	err = MakeTempFile(spec->vRefNum, &temp);
+	if (err != noErr) {
+		return err;
+	}
+	err = FSpCreate(&temp, kCreator, kTypeProject, script);
+	if (err != noErr) {
+		return err;
+	}
+	err = FSpOpenDF(&temp, fsRdWrPerm, &refNum);
+	if (err != noErr) {
+		goto error1;
+	}
+	err = ProjectWriteContent(project, refNum);
+	if (err != noErr) {
+		goto error2;
+	}
+
+	// For ordinary "Save", swap the file contents.
+	if (mode == kSaveUpdate) {
+		err = FSpExchangeFiles(&temp, spec);
+		if (err == noErr) {
+			err = FlushVol(NULL, spec->vRefNum);
+			if (err != noErr) {
+				FSClose(refNum);
+				return err;
+			}
+			ProjectSetFile(project, refNum, spec);
+			// FIXME: What error handling, here?
+			FSpDelete(&temp);
+			return noErr;
+		}
+		// paramErr: function not supported by volume.
+		if (err != paramErr) {
+			goto error2;
+		}
+	}
+
+	ProjectCloseFile(project);
+	if (mode != kSaveNew) {
+		// For replace or update, the file already exists.
+		err = FSpDelete(spec);
+		if (err != noErr && err != fnfErr) {
+			goto error2;
+		}
+	}
+
+	// Try move & rename.
+	memset(&hb, 0, sizeof(hb));
+	hb.copyParam.ioNamePtr = temp.name;
+	hb.copyParam.ioVRefNum = temp.vRefNum;
+	hb.copyParam.ioNewName = spec->name;
+	hb.copyParam.ioNewDirID = spec->parID;
+	hb.copyParam.ioDirID = temp.parID;
+	err = PBHMoveRenameSync(&hb);
+	if (err == noErr) {
+		goto done;
+	}
+	// paramErr: function not supported by volume.
+	if (err != paramErr) {
+		goto error2;
+	}
+
+	// Try move, then rename.
+	memset(&cm, 0, sizeof(cm));
+	cm.ioNamePtr = temp.name;
+	cm.ioVRefNum = temp.vRefNum;
+	cm.ioNewDirID = spec->parID;
+	cm.ioDirID = temp.parID;
+	err = PBCatMoveSync(&cm);
+	if (err != noErr) {
+		goto error2;
+	}
+	temp.parID = spec->parID;
+	err = FSpRename(&temp, spec->name);
+	if (err != noErr) {
+		goto error2;
+	}
+done:
+	err = FlushVol(NULL, spec->vRefNum);
+	if (err != noErr) {
+		FSClose(refNum);
+		return err;
+	}
+	ProjectSetFile(project, refNum, spec);
+	return noErr;
+
+error2:
+	FSClose(refNum);
+error1:
+	FSpDelete(&temp);
+	return err;
+}
+
+// A SaveCommand distinguishes between Save and Save As.
+typedef enum { kSave, kSaveAs } SaveCommand;
+
+// ProjectSave handles the Save and SaveAs menu commands.
+static void ProjectSave(WindowRef window, ProjectHandle project,
+                        SaveCommand cmd)
+{
+	// See listing 1-12 in IM: Files.
 	Str255 name;
 	StandardFileReply reply;
-	short refNum;
-	struct ProjectData data;
-	struct Project *projectp;
 	OSErr err;
-	Boolean hasfile;
-	ParamBlockRec pb;
 	struct ErrorParams errp;
-	long size;
+	FSSpec spec;
+	ScriptCode script;
 
-	data.data = NULL;
-	refNum = 0;
-	hasfile = FALSE;
+	if (cmd == kSaveAs || (*project)->fileSpec.vRefNum == 0) {
+		GetWTitle(window, name);
+		StandardPutFile("\pSave project as:", name, &reply);
+		if (!reply.sfGood) {
+			return;
+		}
 
-	GetWTitle(window, name);
-	StandardPutFile("\pSave project as:", name, &reply);
-	if (!reply.sfGood) {
-		return;
-	}
-
-	err = ProjectMarshal(project, &data);
-	if (err != noErr) {
-		goto error;
-	}
-
-	// Delete file if replacing. This way, we get a new creation date (makes
-	// sense) and the correct creator and type codes.
-	if (reply.sfReplacing) {
-		err = FSpDelete(&reply.sfFile);
+		err = ProjectWrite(project, &reply.sfFile, reply.sfScript,
+		                   reply.sfReplacing ? kSaveReplace : kSaveNew);
+		if (err != noErr) {
+			goto error;
+		}
+		SetWTitle(window, reply.sfFile.name);
+	} else {
+		memcpy(&spec, &(*project)->fileSpec, sizeof(FSSpec));
+		script = (*project)->fileScript;
+		err = ProjectWrite(project, &spec, script, kSaveUpdate);
 		if (err != noErr) {
 			goto error;
 		}
 	}
 
-	// Write out the new file.
-	err = FSpCreate(&reply.sfFile, kCreator, kTypeProject, reply.sfScript);
-	if (err != noErr) {
-		goto error;
-	}
-	hasfile = TRUE;
-	err = FSpOpenDF(&reply.sfFile, fsWrPerm, &refNum);
-	if (err != noErr) {
-		goto error;
-	}
-	size = data.size;
-	err = FSWrite(refNum, &size, *data.data);
-	if (err != noErr) {
-		goto error;
-	}
-	DisposeHandle(data.data);
-	data.data = NULL;
-	memset(&pb, 0, sizeof(pb));
-	pb.fileParam.ioFRefNum = refNum;
-	PBFlushFile(&pb, FALSE);
-	err = pb.fileParam.ioResult;
-	if (err != noErr) {
-		goto error;
-	}
-
-	// Done writing, update the window and project.
-	SetWTitle(window, reply.sfFile.name);
-	projectp = *project;
-	if (projectp->fileRef != 0) {
-		FSClose(projectp->fileRef);
-	}
-	projectp->fileRef = refNum;
-	projectp->fileSpec = reply.sfFile;
 	return;
 
 error:
-	if (data.data != NULL) {
-		DisposeHandle(data.data);
-	}
-	if (refNum != 0) {
-		FSClose(refNum);
-	}
-	if (hasfile) {
-		FSpDelete(&reply.sfFile);
-	}
 	memset(&errp, 0, sizeof(errp));
 	errp.err = kErrCouldNotSaveProject;
 	errp.osErr = err;
 	errp.strParam = reply.sfFile.name;
 	ShowError(&errp);
-}
-
-static void ProjectSaveImpl(WindowRef window, ProjectHandle project)
-{
-	struct ProjectData data;
-	short refNum;
-	FSSpec temp;
-	OSErr err;
-	struct ErrorParams errp;
-	Boolean hasfile;
-	long size;
-
-	(void)window;
-
-	data.data = NULL;
-	refNum = 0;
-	hasfile = FALSE;
-
-	err = ProjectMarshal(project, &data);
-	if (err != noErr) {
-		goto error;
-	}
-	err = MakeTempFile((*project)->fileSpec.vRefNum, &temp);
-	if (err != noErr) {
-		goto error;
-	}
-	err = FSpCreate(&temp, 'trsh', 'trsh', smSystemScript);
-	if (err != noErr) {
-		goto error;
-	}
-	hasfile = TRUE;
-	err = FSpOpenDF(&temp, fsWrPerm, &refNum);
-	if (err != noErr) {
-		goto error;
-	}
-	size = data.size;
-	err = FSWrite(refNum, &size, *data.data);
-	if (err != noErr) {
-		goto error;
-	}
-	DisposeHandle(data.data);
-	data.data = NULL;
-	err = FSClose(refNum);
-	refNum = 0;
-	if (err != noErr) {
-		goto error;
-	}
-	err = FSpExchangeFiles(&temp, &(*project)->fileSpec);
-	if (err != noErr) {
-		goto error;
-	}
-	FSpDelete(&temp);
-	return;
-
-error:
-	if (data.data) {
-		DisposeHandle(data.data);
-	}
-	if (refNum != 0) {
-		FSClose(refNum);
-	}
-	if (hasfile) {
-		FSpDelete(&temp);
-	}
-	memcpy(&temp.name, &(*project)->fileSpec.name, sizeof(temp.name));
-	memset(&errp, 0, sizeof(errp));
-	errp.err = kErrCouldNotSaveProject;
-	errp.osErr = err;
-	errp.strParam = temp.name;
-	ShowError(&errp);
-}
-
-// Save the project to disk in response to a Save command.
-static void ProjectSave(WindowRef window, ProjectHandle project)
-{
-	if ((*project)->fileRef == 0) {
-		ProjectSaveAs(window, project);
-	} else {
-		ProjectSaveImpl(window, project);
-	}
 }
 
 void ProjectCommand(WindowRef window, ProjectHandle project, int menuID,
@@ -422,10 +487,10 @@ void ProjectCommand(WindowRef window, ProjectHandle project, int menuID,
 			ProjectClose(window, project);
 			break;
 		case iFile_Save:
-			ProjectSave(window, project);
+			ProjectSave(window, project, kSave);
 			break;
 		case iFile_SaveAs:
-			ProjectSaveAs(window, project);
+			ProjectSave(window, project, kSaveAs);
 			break;
 		}
 		break;

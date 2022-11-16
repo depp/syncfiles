@@ -23,6 +23,13 @@
 // Classic Mac OS. Header is part of Universal Interfaces & Carbon.
 #include <ConditionalMacros.h>
 
+// The target API macros do not exist until later versions of Universal
+// Interfaces. For example, they do not exist in Universal Interfaces 3.1, which
+// ships with CodeWarrior Pro 4.
+#ifndef TARGET_API_MAC_OS8
+#define TARGET_API_MAC_OS8 1
+#endif
+
 #elif __APPLE__
 
 // Newer apple systems, including macOS >= 10. Header is in /usr/include, or
