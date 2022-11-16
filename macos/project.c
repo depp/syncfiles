@@ -184,7 +184,7 @@ static void ProjectClose(WindowRef window, ProjectHandle project)
 
 #define kChunkCount 2
 
-#define ALIGN(x) (((x) + 15) + ~(UInt32)15)
+#define ALIGN(x) (((x) + 15) & ~(UInt32)15)
 
 static OSErr ProjectWriteHeader(short refNum, int nchunks,
                                 struct ProjectChunk *ckInfo)
