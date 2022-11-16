@@ -12,6 +12,7 @@
 #include "macos/strutil.h"
 #include "macos/tempfile.h"
 
+#include <Aliases.h>
 #include <MacMemory.h>
 #include <MacWindows.h>
 
@@ -545,24 +546,35 @@ static void ProjectChooseDir(WindowRef window, ProjectHandle project,
 	struct Project *projectp;
 	struct ProjectDir *dirp;
 	FSSpec directory;
+	AliasHandle alias;
 	Handle path;
 	int pathLength;
 	OSErr err;
 
-	if (ChooseDirectory(&directory)) {
-		err = GetDirPath(&directory, &pathLength, &path);
-		if (err != noErr) {
-			ExitErrorOS(kErrUnknown, err);
-		}
-		projectp = *project;
-		dirp = &projectp->dirs[whichDir];
-		if (dirp->path != NULL) {
-			DisposeHandle(dirp->path);
-		}
-		dirp->pathLength = pathLength;
-		dirp->path = path;
-		InvalRect(&window->portRect);
+	if (!ChooseDirectory(&directory)) {
+		return;
 	}
+	err = NewAlias(NULL, &directory, &alias);
+	if (err != noErr) {
+		ExitErrorOS(kErrUnknown, err);
+	}
+	err = GetDirPath(&directory, &pathLength, &path);
+	if (err != noErr) {
+		DisposeHandle((Handle)alias);
+		ExitErrorOS(kErrUnknown, err);
+	}
+	projectp = *project;
+	dirp = &projectp->dirs[whichDir];
+	if (dirp->path != NULL) {
+		DisposeHandle(dirp->path);
+	}
+	dirp->pathLength = pathLength;
+	dirp->path = path;
+	if (dirp->alias != NULL) {
+		DisposeHandle((Handle)dirp->alias);
+	}
+	dirp->alias = alias;
+	InvalRect(&window->portRect);
 }
 
 void ProjectMouseDown(WindowRef window, ProjectHandle project,
