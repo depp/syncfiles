@@ -17,6 +17,7 @@ void QuitApp(void)
 	ExitToShell();
 }
 
+// HandleClose handles a request to close the given window.
 static void HandleClose(WindowRef window)
 {
 	ProjectHandle project;
@@ -33,6 +34,7 @@ static void HandleClose(WindowRef window)
 	}
 }
 
+// AdjustMenus adjusts menus before selecting a menu item.
 static void AdjustMenus(void)
 {
 	WindowRef window;
@@ -66,6 +68,8 @@ static void AdjustMenus(void)
 	}
 }
 
+// HandleMenuCommand handles a menu command. The top 16 bits store the menu ID,
+// and the low 16 bits store the item within that menu.
 static void HandleMenuCommand(long command)
 {
 	int menuID = command >> 16;
@@ -114,7 +118,7 @@ static void HandleMenuCommand(long command)
 	SysBeep(1);
 }
 
-// Handle a mouse down event.
+// HandleMouseDown handles a mouse down event.
 static void HandleMouseDown(EventRecord *event)
 {
 	short clickPart;
@@ -171,6 +175,7 @@ static void HandleMouseDown(EventRecord *event)
 	}
 }
 
+// HandleKeyDown handles a key down event.
 static void HandleKeyDown(EventRecord *event)
 {
 	long command;
@@ -183,6 +188,7 @@ static void HandleKeyDown(EventRecord *event)
 	}
 }
 
+// HandleActivate handles a window activate event.
 static void HandleActivate(EventRecord *event)
 {
 	ProjectHandle project;
@@ -204,6 +210,7 @@ static void HandleActivate(EventRecord *event)
 	SetPort(savedPort);
 }
 
+// HandleUpdate handles a window update event.
 static void HandleUpdate(EventRecord *event)
 {
 	ProjectHandle project;
