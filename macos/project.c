@@ -338,6 +338,8 @@ static OSErr ProjectWrite(ProjectHandle project, FSSpec *spec,
 	OSErr err;
 	short refNum;
 
+	// See IM: Files, p. 1-25, Listing 1-10 "Updating a File Safely".
+
 	err = MakeTempFile(spec->vRefNum, &temp);
 	if (err != noErr) {
 		return err;
@@ -448,6 +450,7 @@ static void ProjectSave(WindowRef window, ProjectHandle project,
 
 	if (cmd == kSaveAs || (*project)->fileSpec.vRefNum == 0) {
 		GetWTitle(window, name);
+		// FIXME: Move string to resource.
 		StandardPutFile("\pSave project as:", name, &reply);
 		if (!reply.sfGood) {
 			return;
