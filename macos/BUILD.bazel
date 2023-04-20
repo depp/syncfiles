@@ -1,0 +1,16 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("//bazel:copts.bzl", "COPTS")
+
+cc_test(
+    name = "pstrbuilder_test",
+    size = "small",
+    srcs = [
+        "pstrbuilder.c",
+        "pstrbuilder.h",
+        "pstrbuilder_test.c",
+    ],
+    copts = COPTS,
+    deps = [
+        "//lib",
+    ],
+)
