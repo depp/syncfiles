@@ -3,9 +3,12 @@
 // Mozilla Public License, version 2.0. See LICENSE.txt for details.
 #include "macos/main.h"
 
+#include "lib/defs.h"
 #include "macos/error.h"
 #include "macos/project.h"
 #include "macos/resources.h"
+
+#include <StandardFile.h>
 
 #ifndef __MWERKS__
 // Link error if defined with CodeWarrior.
@@ -15,6 +18,17 @@ QDGlobals qd;
 void QuitApp(void)
 {
 	ExitToShell();
+}
+
+// kFileTypes is a list of all file types that we can open.
+static const OSType kFileTypes[] = {kTypeProject};
+
+// HandleOpen handles the Open menu command.
+static void HandleOpen(void)
+{
+	StandardFileReply sfreply;
+
+	StandardGetFile(NULL, ARRAY_COUNT(kFileTypes), kFileTypes, &sfreply);
 }
 
 // HandleClose handles a request to close the given window.
@@ -57,7 +71,7 @@ static void AdjustMenus(void)
 
 	if (fileMenu != NULL) {
 		EnableItem(fileMenu, iFile_New);
-		DisableItem(fileMenu, iFile_Open);
+		EnableItem(fileMenu, iFile_Open);
 		if (!hasDocument) {
 			DisableItem(fileMenu, iFile_Close);
 			DisableItem(fileMenu, iFile_Save);
@@ -94,6 +108,9 @@ static void HandleMenuCommand(long command)
 		switch (item) {
 		case iFile_New:
 			ProjectNew();
+			return;
+		case iFile_Open:
+			HandleOpen();
 			return;
 		case iFile_Quit:
 			QuitApp();
