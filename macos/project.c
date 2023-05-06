@@ -130,11 +130,11 @@ void ProjectNew(void)
 
 	project = (ProjectHandle)NewHandle(sizeof(struct Project));
 	if (project == NULL) {
-		EXIT_ASSERT(NULL);
+		EXIT_INTERNAL();
 	}
 	window = GetNewCWindow(rWIND_Project, NULL, (WindowPtr)-1);
 	if (window == NULL) {
-		EXIT_ASSERT(NULL);
+		EXIT_INTERNAL();
 	}
 	windowWidth = window->portRect.right - window->portRect.left;
 	SetWRefCon(window, (long)project);
@@ -145,7 +145,7 @@ void ProjectNew(void)
 	for (i = 0; i < 2; i++) {
 		control = GetNewControl(rCNTL_ChooseFolder, window);
 		if (control == NULL) {
-			EXIT_ASSERT(NULL);
+			EXIT_INTERNAL();
 		}
 		controlWidth =
 			(*control)->contrlRect.right - (*control)->contrlRect.left;
@@ -453,7 +453,6 @@ static void ProjectSave(WindowRef window, ProjectHandle project,
 	Str255 name;
 	StandardFileReply reply;
 	OSErr err;
-	struct ErrorParams errp;
 	FSSpec spec;
 	ScriptCode script;
 
@@ -483,11 +482,7 @@ static void ProjectSave(WindowRef window, ProjectHandle project,
 	return;
 
 error:
-	memset(&errp, 0, sizeof(errp));
-	errp.err = kErrCouldNotSaveProject;
-	errp.osErr = err;
-	errp.strParam = reply.sfFile.name;
-	ShowError(&errp);
+	ShowError(kErrCouldNotSaveProject, kErrNone, err, reply.sfFile.name);
 }
 
 void ProjectCommand(WindowRef window, ProjectHandle project, int menuID,
@@ -569,7 +564,8 @@ static Boolean VolumeDoesSupportIDs(short vRefNum)
 	hb.ioParam.ioReqCount = sizeof(parms);
 	err = PBHGetVolParms(&hb, false);
 	if (err != noErr) {
-		ExitErrorOS(kErrUnknown, err);
+		ShowError(kErrVolumeQuery, kErrNone, err, NULL);
+		return false;
 	}
 	return (parms.vMAttrib & (1ul << bHasFileIDs)) != 0;
 }
@@ -591,15 +587,21 @@ static void ProjectChooseDir(WindowRef window, ProjectHandle project,
 	if (VolumeDoesSupportIDs(directory.vRefNum)) {
 		err = NewAlias(NULL, &directory, &alias);
 		if (err != noErr) {
-			ExitErrorOS(kErrUnknown, err);
+			ShowError(kErrAlias, kErrNone, err, NULL);
+			return;
 		}
 	} else {
 		alias = NULL;
 	}
 	err = GetDirPath(&directory, &pathLength, &path);
 	if (err != noErr) {
-		ExitErrorOS(kErrUnknown, err);
+		ShowError(kErrDirPath, kErrNone, err, NULL);
+		if (alias != NULL) {
+			DisposeHandle((Handle)alias);
+		}
+		return;
 	}
+
 	projectp = *project;
 	dirp = &projectp->dirs[whichDir];
 	if (dirp->path != NULL) {

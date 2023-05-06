@@ -29,6 +29,12 @@ struct PStrBuilder {
 	Boolean truncated;
 };
 
+// PStrInit initializes a string buffer.
+void PStrInit(struct PStrBuilder *buf);
+
+// PStrAppendChar appends a single character to the buffer.
+void PStrAppendChar(struct PStrBuilder *buf, unsigned char c);
+
 // PStrAppend appends a string to the buffer.
 void PStrAppend(struct PStrBuilder *buf, const unsigned char *src);
 

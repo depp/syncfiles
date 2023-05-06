@@ -47,7 +47,8 @@ static void SelectCurrentDirectory(struct ChooseDirReply *reply)
 	ci.dirInfo.ioDrDirID = LMGetCurDirStore();
 	err = PBGetCatInfoSync(&ci);
 	if (err != 0) {
-		ExitErrorOS(kErrUnknown, err);
+		ShowError(kErrNone, kErrNone, err, NULL);
+		return;
 	}
 	directory = reply->directory;
 	directory->vRefNum = ci.dirInfo.ioVRefNum;
@@ -99,10 +100,10 @@ Boolean ChooseDirectory(FSSpec *directory)
 	switch (cdreply.status) {
 	case kCDChild:
 		BlockMoveData(&sfreply.sfFile, directory, sizeof(FSSpec));
-		return 1;
+		return true;
 	case kCDCurrent:
-		return 1;
+		return true;
 	default:
-		return 0;
+		return false;
 	}
 }

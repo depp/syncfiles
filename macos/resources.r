@@ -119,10 +119,21 @@ resource 'BNDL' (128, purgeable) {
 };
 
 resource 'STR#' (rSTRS_Errors) {{
-	"An unknown error occurred.",
+	"OK",
+	"Quit",
+	"An error of type ^2 occurred.",
+	"Error at: ^1:^2",
+	"Assertion: ^1",
 	"An internal error occurred.",
+	"An unknown error occurred.",
 	"Out of memory.",
 	"Could not save project “^1”.",
+	"Could not read project “^1”.",
+	"The project file is damaged.",
+	"The project file is from an unknown version of SyncFiles.",
+	"Could not query volume parameters.",
+	"Could not create alias.",
+	"Could not get directory path.",
 }};
 
 resource 'WIND' (rWIND_Project, preload, purgeable) {

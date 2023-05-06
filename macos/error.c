@@ -3,73 +3,120 @@
 // Mozilla Public License, version 2.0. See LICENSE.txt for details.
 #include "macos/error.h"
 
+#include "lib/defs.h"
 #include "macos/main.h"
+#include "macos/pstrbuilder.h"
 #include "macos/resources.h"
-#include "macos/strutil.h"
 
 #include <Dialogs.h>
 #include <TextUtils.h>
 
-void ExitError(ErrorCode errCode)
+enum {
+	// OK
+	kStrOK = 1,
+	// Quit
+	kStrQuit,
+	// An error of type ^2 occurred.
+	kStrErrorCode,
+	// Error at: ^1:^2
+	kStrErrorAt,
+	// Assertion: ^1
+	kStrAssertion,
+	// An internal error occurred.
+	kStrInternal,
+	// An unknown error occurred.
+	kStrUnknown,
+	// (Base value for error messages.)
+	kStrMessageBase
+};
+
+static void AppendErrorArray(struct PStrBuilder *str, int sep, int strNum,
+                             int paramCount, const unsigned char *const *params)
 {
 	Str255 message;
 
-	GetIndString(message, rSTRS_Errors, errCode);
-	if (message[0] == 0) {
-		GetIndString(message, rSTRS_Errors, kErrUnknown);
+	if (str->data[0] > 0 && sep != 0) {
+		PStrAppendChar(str, sep);
 	}
-	ParamText(message, NULL, NULL, NULL);
-	Alert(rAlrtError, NULL);
-	QuitApp();
+	GetIndString(message, rSTRS_Errors, strNum);
+	if (message[0] == 0) {
+		PStrAppendChar(str, '?');
+	} else {
+		PStrAppendSubstitute(str, message, paramCount, params);
+	}
 }
 
-void ExitErrorOS(ErrorCode errCode, short osErr)
+static void AppendError0(struct PStrBuilder *str, int sep, int strNum)
 {
-	Str255 message;
-
-	GetIndString(message, rSTRS_Errors, errCode);
-	if (message[0] == 0) {
-		GetIndString(message, rSTRS_Errors, kErrUnknown);
-	}
-	StrAppendFormat(message, "\p\rError code: %d", osErr);
-	ParamText(message, NULL, NULL, NULL);
-	Alert(rAlrtError, NULL);
-	QuitApp();
+	AppendErrorArray(str, sep, strNum, 0, NULL);
 }
 
-void ExitMemError(void)
+static void AppendError1(struct PStrBuilder *str, int sep, int strNum,
+                         const unsigned char *strParam)
 {
-	ExitErrorOS(kErrOutOfMemory, MemError());
+	AppendErrorArray(str, sep, strNum, 1, &strParam);
+}
+
+static void AppendError2(struct PStrBuilder *str, int sep, int strNum,
+                         const unsigned char *strParam, int intParam)
+{
+	unsigned char num[16];
+	const unsigned char *params[2];
+
+	params[0] = strParam;
+	NumToString(intParam, num);
+	params[1] = num;
+	AppendErrorArray(str, sep, strNum, 2, params);
+}
+
+static void ShowErrorAlert(const unsigned char *message, int button)
+{
+	Str255 buttonText;
+
+	GetIndString(buttonText, rSTRS_Errors, button);
+	ParamText(message, buttonText, NULL, NULL);
+	Alert(rAlrtError, NULL);
 }
 
 void ExitAssert(const unsigned char *file, int line,
-                const unsigned char *message)
+                const unsigned char *assertion)
 {
-	Str255 dmessage;
+	struct PStrBuilder str;
 
-	GetIndString(dmessage, rSTRS_Errors, kErrInternal);
-	StrAppendFormat(dmessage, "\p\rError at: %S:%d", file, line);
-	if (message != NULL) {
-		StrAppendFormat(dmessage, "\p: %S", message);
+	PStrInit(&str);
+	AppendError0(&str, 0, kStrInternal);
+	if (file != NULL) {
+		AppendError2(&str, '\r', kStrErrorAt, file, line);
 	}
-	ParamText(dmessage, NULL, NULL, NULL);
-	Alert(rAlrtError, NULL);
+	if (assertion != NULL) {
+		AppendError1(&str, '\r', kStrAssertion, assertion);
+	}
+	ShowErrorAlert(str.data, kStrQuit);
 	QuitApp();
 }
 
-void ShowError(const struct ErrorParams *p)
+void ShowError(ErrorCode err1, ErrorCode err2, short osErr,
+               const unsigned char *strParam)
 {
-	Str255 message;
+	struct PStrBuilder str;
 
-	GetIndString(message, rSTRS_Errors, p->err);
-	if (message[0] == 0) {
-		GetIndString(message, rSTRS_Errors, kErrUnknown);
-	} else if (p->strParam != NULL) {
-		StrSubstitute(message, p->strParam);
+	PStrInit(&str);
+	if (err1 != kErrNone) {
+		AppendError1(&str, ' ', kStrMessageBase - 1 + err1, strParam);
 	}
-	if (p->osErr != NULL) {
-		StrAppendFormat(message, "\p\rError code: %d", p->osErr);
+	if (err2 != kErrNone) {
+		AppendError1(&str, ' ', kStrMessageBase - 1 + err2, strParam);
 	}
-	ParamText(message, NULL, NULL, NULL);
-	Alert(rAlrtError, NULL);
+	if (osErr != 0) {
+		AppendError2(&str, ' ', kStrErrorCode, NULL, osErr);
+	}
+	if (str.data[0] == 0) {
+		AppendError0(&str, ' ', kStrUnknown);
+	}
+	ShowErrorAlert(str.data, kStrOK);
+}
+
+void ShowMemError(void)
+{
+	ShowError(kErrOutOfMemory, kErrNone, MemError(), NULL);
 }

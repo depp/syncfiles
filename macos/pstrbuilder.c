@@ -5,6 +5,12 @@
 
 #include <string.h>
 
+void PStrInit(struct PStrBuilder *buf)
+{
+	buf->data[0] = 0;
+	buf->truncated = 0;
+}
+
 static void PStrAppendMem(struct PStrBuilder *buf, const unsigned char *src,
                           int slen)
 {
@@ -33,6 +39,11 @@ static void PStrAppendMem(struct PStrBuilder *buf, const unsigned char *src,
 	}
 	memcpy(buf->data + 1 + dlen, src, slen);
 	buf->data[0] = dlen + slen;
+}
+
+void PStrAppendChar(struct PStrBuilder *buf, unsigned char c)
+{
+	PStrAppendMem(buf, &c, 1);
 }
 
 void PStrAppend(struct PStrBuilder *buf, const unsigned char *src)

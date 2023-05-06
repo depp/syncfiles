@@ -6,32 +6,34 @@
 
 // Error codes, corresponding to messages in a STR# resource. This should be
 // kept in sync with STR# rSTRS_Errors in resources.r.
-typedef enum {
-	// An unknown error occurred.
-	kErrUnknown = 1,
-	// An internal error occurred.
-	kErrInternal,
+typedef enum ErrorCode {
+	// (no error)
+	kErrNone,
 	// Out of memory.
 	kErrOutOfMemory,
 	// Could not save project "^1".
 	kErrCouldNotSaveProject,
+	// Could not read project "^1".
+	kErrCouldNotReadProject,
+	// The project file is damaged.
+	kErrProjectDamaged,
+	// The project file is from an unknown version of SyncFiles.
+	kErrProjectUnknownVersion,
+	// Could not query volume parameters.
+	kErrVolumeQuery,
+	// Could not create alias.
+	kErrAlias,
+	// Could not get directory path.
+	kErrDirPath
 } ErrorCode;
 
-// ExitError shows an error dialog with the given error message, then quits the
-// program.
-void ExitError(ErrorCode errCode);
-
-// ExitErrorOS shows an error dialog with the given error message and an OS
-// error code, then quits the program.
-void ExitErrorOS(ErrorCode errCode, short osErr);
-
-// ExitMemError shows an out of memory error and quits the program.
-void ExitMemError(void);
-
-// ExitAssert shows an assertion error and quits the program. The message may be
-// NULL.
+// ExitAssert shows an assertion error and quits the program. Either the file or
+// the assertion may be NULL.
 void ExitAssert(const unsigned char *file, int line,
-                const unsigned char *message);
+                const unsigned char *assertion);
+
+// EXIT_INTERNAL shows an internal error message and quits the program.
+#define EXIT_INTERNAL() ExitAssert("\p" __FILE__, __LINE__, NULL)
 
 // EXIT_ASSERT shows an assertion error and quits the program. The message may
 // be NULL.
@@ -45,24 +47,13 @@ void ExitAssert(const unsigned char *file, int line,
 			ExitAssert("\p" __FILE__, __LINE__, "\p" #p); \
 	} while (0)
 
-// An ErrorParams contains the parameters for displaying en error alert window.
-// This structure should be zeroed before use, in case additional fields are
-// added.
-struct ErrorParams {
-	// The application error code. If this is zero, it will be treated as
-	// kErrInternal.
-	ErrorCode err;
+// ShowMemError shows an out of memory error to the user.
+void ShowMemError(void);
 
-	// The OS error code. This is displayed at the end of the error message,
-	// unless it is zero.
-	short osErr;
-
-	// If the error messages contain any string substitutions like "^1", those
-	// substitutions are replaced with this string.
-	const unsigned char *strParam;
-};
-
-// ShowError shows an error alert window to the user.
-void ShowError(const struct ErrorParams *p);
+// ShowError shows an error alert window to the user. The error codes are
+// displayed if they are not 0. If osErr is not 0, then it is displayed as well.
+// Any ^1 parameters in the error messages are replaced with strParam.
+void ShowError(ErrorCode err1, ErrorCode err2, short osErr,
+               const unsigned char *strParam);
 
 #endif
