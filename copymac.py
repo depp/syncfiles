@@ -94,7 +94,6 @@ def main(argv: List[str]) -> None:
         dest_subdir.mkdir(exist_ok=True)
         fset = set()
         for src in src_subdir.iterdir():
-            print(src)
             file_type = suffixes.get(src.suffix)
             if file_type is not None:
                 fset.add(src.name)
