@@ -38,7 +38,9 @@ uint32		chunk crc32
 
 Chunks: (names zero-padded)
 "LOCA"	local directory alias
+"LOCP"	local directory path
 "REMA"	destination directory alias
+"REMP"	destination directory path
 
 Chunks are aligned to 16 byte boundaries, and the file is padded to a 16 byte
 boundary. This is just to make it easier to read hexdumps.
@@ -183,7 +185,7 @@ static void ProjectClose(WindowRef window, ProjectHandle project)
 	DisposeHandle((Handle)project);
 }
 
-#define kChunkCount 2
+#define kChunkCount 4
 
 #define ALIGN(x) (((x) + 15) & ~(UInt32)15)
 
@@ -218,6 +220,7 @@ static OSErr ProjectWriteHeader(short refNum, int nchunks,
 }
 
 static const UInt32 kProjectAliasChunks[2] = {'LOCA', 'REMA'};
+static const UInt32 kProjectPathChunks[2] = {'LOCP', 'REMP'};
 
 static OSErr ProjectFlush(short refNum)
 {
@@ -248,6 +251,12 @@ static OSErr ProjectWriteContent(ProjectHandle project, short refNum)
 		if (h != NULL) {
 			ckData[nchunks] = h;
 			ckInfo[nchunks].id = kProjectAliasChunks[i];
+			nchunks++;
+		}
+		h = (*project)->dirs[i].path;
+		if (h != NULL) {
+			ckData[nchunks] = h;
+			ckInfo[nchunks].id = kProjectPathChunks[i];
 			nchunks++;
 		}
 	}
@@ -543,6 +552,28 @@ void ProjectActivate(WindowRef window, ProjectHandle project, int isActive)
 	}
 }
 
+// VolumeDoesSupportIDs returns true if the volume supports file IDs. If the
+// volume does not support file IDs, then we fall back to using paths to refer
+// to project directories. This applies to the Basilisk II "Unix" volume. If you
+// try to resolve an alias to a file on the Basilisk II "Unix" volume, you may
+// get a different file than intended, because the directory IDs are not stable.
+static Boolean VolumeDoesSupportIDs(short vRefNum)
+{
+	HParamBlockRec hb;
+	GetVolParmsInfoBuffer parms;
+	OSErr err;
+
+	memset(&hb, 0, sizeof(hb));
+	hb.ioParam.ioVRefNum = vRefNum;
+	hb.ioParam.ioBuffer = (Ptr)&parms;
+	hb.ioParam.ioReqCount = sizeof(parms);
+	err = PBHGetVolParms(&hb, false);
+	if (err != noErr) {
+		ExitErrorOS(kErrUnknown, err);
+	}
+	return (parms.vMAttrib & (1ul << bHasFileIDs)) != 0;
+}
+
 static void ProjectChooseDir(WindowRef window, ProjectHandle project,
                              int whichDir)
 {
@@ -557,13 +588,16 @@ static void ProjectChooseDir(WindowRef window, ProjectHandle project,
 	if (!ChooseDirectory(&directory)) {
 		return;
 	}
-	err = NewAlias(NULL, &directory, &alias);
-	if (err != noErr) {
-		ExitErrorOS(kErrUnknown, err);
+	if (VolumeDoesSupportIDs(directory.vRefNum)) {
+		err = NewAlias(NULL, &directory, &alias);
+		if (err != noErr) {
+			ExitErrorOS(kErrUnknown, err);
+		}
+	} else {
+		alias = NULL;
 	}
 	err = GetDirPath(&directory, &pathLength, &path);
 	if (err != noErr) {
-		DisposeHandle((Handle)alias);
 		ExitErrorOS(kErrUnknown, err);
 	}
 	projectp = *project;
