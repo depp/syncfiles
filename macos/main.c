@@ -94,6 +94,10 @@ static void HandleMenuCommand(long command)
 	WindowRef window;
 	ProjectHandle project;
 
+	if (command == 0) {
+		return;
+	}
+
 	switch (menuID) {
 	case rMENU_Apple:
 		switch (item) {
