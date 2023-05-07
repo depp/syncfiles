@@ -15,6 +15,9 @@ enum {
 	iFile_SaveAs = 6,
 	iFile_Revert = 7,
 	iFile_Quit = 9,
+
+	iProject_Upload = 1,
+	iProject_Download = 2,
 };
 
 // Quit the application.

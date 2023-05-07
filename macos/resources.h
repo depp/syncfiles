@@ -26,6 +26,7 @@
 #define rMENU_Apple 128
 #define rMENU_File 129
 #define rMENU_Edit 130
+#define rMENU_Project 131
 
 /* STR# Error messages. */
 #define rSTRS_Errors 128

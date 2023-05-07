@@ -55,11 +55,12 @@ static void HandleClose(WindowRef window)
 static void AdjustMenus(void)
 {
 	WindowRef window;
-	MenuHandle fileMenu;
+	MenuHandle fileMenu, projectMenu;
 	ProjectHandle project;
 	Boolean hasDocument = FALSE;
 
 	fileMenu = GetMenuHandle(rMENU_File);
+	projectMenu = GetMenuHandle(rMENU_Project);
 	window = FrontWindow();
 	if (window != NULL) {
 		switch (GetWindowKind(window)) {
@@ -67,7 +68,7 @@ static void AdjustMenus(void)
 			project = (ProjectHandle)GetWRefCon(window);
 			ASSERT(project != NULL);
 			hasDocument = TRUE;
-			ProjectAdjustMenus(project, fileMenu);
+			ProjectAdjustMenus(project, fileMenu, projectMenu);
 			break;
 		}
 	}
@@ -82,6 +83,10 @@ static void AdjustMenus(void)
 			DisableItem(fileMenu, iFile_Revert);
 		}
 		EnableItem(fileMenu, iFile_Quit);
+	}
+	if (projectMenu != NULL && !hasDocument) {
+		DisableItem(projectMenu, iProject_Upload);
+		DisableItem(projectMenu, iProject_Download);
 	}
 }
 

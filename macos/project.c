@@ -449,14 +449,31 @@ void ProjectOpen(FSSpec *spec, ScriptCode script)
 	ProjectCreateWindow(project);
 }
 
-void ProjectAdjustMenus(ProjectHandle project, MenuHandle fileMenu)
+static Boolean ProjectHasDirectory(ProjectHandle project, int which)
 {
-	(void)project;
+	struct Project *projectp = *project;
+	return projectp->dirs[which].alias != NULL ||
+	       projectp->dirs[which].path != NULL;
+}
+
+void ProjectAdjustMenus(ProjectHandle project, MenuHandle fileMenu,
+                        MenuHandle projectMenu)
+{
 	if (fileMenu != NULL) {
 		EnableItem(fileMenu, iFile_Close);
 		EnableItem(fileMenu, iFile_Save);
 		EnableItem(fileMenu, iFile_SaveAs);
 		EnableItem(fileMenu, iFile_Revert);
+	}
+	if (projectMenu != NULL) {
+		if (ProjectHasDirectory(project, kDirLocal) &&
+		    ProjectHasDirectory(project, kDirRemote)) {
+			EnableItem(projectMenu, iProject_Upload);
+			EnableItem(projectMenu, iProject_Download);
+		} else {
+			DisableItem(projectMenu, iProject_Upload);
+			DisableItem(projectMenu, iProject_Download);
+		}
 	}
 }
 

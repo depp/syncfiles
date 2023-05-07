@@ -14,7 +14,8 @@ void ProjectNew(void);
 void ProjectOpen(FSSpec *spec, ScriptCode script);
 
 // ProjectAdjustMenus adjusts menus before selecting a menu item.
-void ProjectAdjustMenus(ProjectHandle project, MenuHandle fileMenu);
+void ProjectAdjustMenus(ProjectHandle project, MenuHandle fileMenu,
+                        MenuHandle projectMenu);
 
 // ProjectCommand handles a menu command or equivalent.
 void ProjectCommand(WindowRef window, ProjectHandle project, int menuID,

@@ -6,6 +6,7 @@ resource 'MBAR' (rMBAR_Main) {{
 	rMENU_Apple,
 	rMENU_File,
 	rMENU_Edit,
+	rMENU_Project,
 }};
 
 resource 'MENU' (rMENU_Apple, preload) {
@@ -52,5 +53,17 @@ resource 'MENU' (rMENU_Edit, preload) {
 		"Copy",             noIcon, "C",   noMark, plain,
 		"Paste",            noIcon, "V",   noMark, plain,
 		"Clear",            noIcon, noKey, noMark, plain,
+	}
+};
+
+resource 'MENU' (rMENU_Project, preload) {
+	rMENU_Project,
+	textMenuProc,
+	0b01111111111111111111111111111111,
+	enabled,
+	"Project",
+	{
+		"Upload Files",		noIcon, "U",   noMark, plain,
+		"Download Files",	noIcon, "D",   noMark, plain,
 	}
 };
