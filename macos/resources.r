@@ -149,6 +149,7 @@ resource 'STR#' (rSTRS_Errors) {{
 	"Could not save project “^1”.",
 	"Could not read project “^1”.",
 	"The project file is damaged.",
+	"The project data is too large.",
 	"The project file is from an unknown version of SyncFiles.",
 	"Could not query volume parameters.",
 	"Could not create alias.",

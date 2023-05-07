@@ -48,6 +48,7 @@ boundary. This is just to make it easier to read hexdumps.
 #define kVersion 0x10000
 
 #define kMaxChunkCount 32
+#define kMaxChunkSize (4 * 1024)
 
 // clang-format off
 
@@ -78,6 +79,9 @@ struct ProjectChunk {
 	UInt32 size;
 	UInt32 crc32;
 };
+
+static const UInt32 kProjectAliasChunks[2] = {'LOCA', 'REMA'};
+static const UInt32 kProjectPathChunks[2] = {'LOCP', 'REMP'};
 
 // Dimensions of controls.
 enum {
@@ -211,6 +215,73 @@ static void ProjectReadError(ProjectHandle project, ErrorCode err, OSErr osErr)
 	ShowError(kErrCouldNotReadProject, err, osErr, name);
 }
 
+typedef enum ProjectChunkStatus {
+	kChunkNotFound,
+	kChunkFound,
+	kChunkError,
+} ProjectChunkStatus;
+
+static ProjectChunkStatus ProjectReadChunk(ProjectHandle project, int nchunks,
+                                           struct ProjectChunk **chunks,
+                                           UInt32 chunkID, Handle *dataPtr,
+                                           long *sizePtr)
+{
+	struct ProjectChunk *chunk, *end;
+	UInt32 offset, size, crc32, gotCRC32;
+	long count;
+	Handle h;
+	OSErr osErr;
+	short fileRef;
+
+	chunk = *chunks;
+	end = chunk + nchunks;
+	for (; chunk < end; chunk++) {
+		if (chunk->id == chunkID) {
+			goto found;
+		}
+	}
+	return kChunkNotFound;
+
+found:
+	offset = chunk->offset;
+	size = chunk->size;
+	crc32 = chunk->crc32;
+	if (size > kMaxChunkSize) {
+		ProjectReadError(project, kErrProjectLarge, 0);
+		return kChunkError;
+	}
+	h = NewHandle(size);
+	if (h == NULL) {
+		ProjectReadError(project, kErrOutOfMemory, MemError());
+		return kChunkError;
+	}
+	if (size > 0) {
+		fileRef = (*project)->fileRef;
+		osErr = SetFPos(fileRef, fsFromStart, offset);
+		if (osErr != 0) {
+			DisposeHandle(h);
+			ProjectReadError(project, kErrNone, osErr);
+			return kChunkError;
+		}
+		count = size;
+		osErr = FSRead(fileRef, &count, *h);
+		if (osErr != 0) {
+			DisposeHandle(h);
+			ProjectReadError(project, kErrNone, osErr);
+			return kChunkError;
+		}
+	}
+	gotCRC32 = CRC32Update(0, *h, size);
+	if (crc32 != gotCRC32) {
+		DisposeHandle(h);
+		ProjectReadError(project, kErrProjectDamaged, 0);
+		return kChunkError;
+	}
+	*dataPtr = h;
+	*sizePtr = size;
+	return kChunkFound;
+}
+
 // ProjectRead reads the project from disk. Returns true on success.
 static Boolean ProjectRead(ProjectHandle project)
 {
@@ -220,8 +291,10 @@ static Boolean ProjectRead(ProjectHandle project)
 	long count, size;
 	ErrorCode err;
 	OSErr osErr;
-	int nchunks;
+	int nchunks, i;
 	UInt32 headerCRC, gotCRC;
+	Handle chunkData;
+	ProjectChunkStatus chunkStatus;
 
 	chunks = NULL;
 	err = kErrNone;
@@ -238,9 +311,12 @@ static Boolean ProjectRead(ProjectHandle project)
 		goto error;
 	}
 	if (count < sizeof(header) ||
-	    memcmp(header.magic, kMagic, sizeof(kMagic)) != 0 ||
-	    header.chunkCount > kMaxChunkCount) {
+	    memcmp(header.magic, kMagic, sizeof(kMagic)) != 0) {
 		err = kErrProjectDamaged;
+		goto error;
+	}
+	if (header.chunkCount > kMaxChunkCount) {
+		err = kErrProjectLarge;
 		goto error;
 	}
 	headerCRC = header.crc32;
@@ -271,7 +347,28 @@ static Boolean ProjectRead(ProjectHandle project)
 		goto error;
 	}
 
-	// TODO: read project data
+	for (i = 0; i < 2; i++) {
+		chunkStatus =
+			ProjectReadChunk(project, nchunks, chunks, kProjectAliasChunks[i],
+		                     &chunkData, &size);
+		if (chunkStatus == kChunkError) {
+			goto errorSilent;
+		}
+		if (chunkStatus == kChunkFound) {
+			(*project)->dirs[i].alias = (AliasHandle)chunkData;
+			// FIXME: Resolve the alias.
+			continue;
+		}
+		chunkStatus = ProjectReadChunk(
+			project, nchunks, chunks, kProjectPathChunks[i], &chunkData, &size);
+		if (chunkStatus == kChunkError) {
+			goto errorSilent;
+		}
+		if (chunkStatus == kChunkFound) {
+			(*project)->dirs[i].pathLength = size;
+			(*project)->dirs[i].path = chunkData;
+		}
+	}
 
 	if (chunks != NULL) {
 		DisposeHandle((Handle)chunks);
@@ -283,6 +380,12 @@ error:
 		DisposeHandle((Handle)chunks);
 	}
 	ProjectReadError(project, err, osErr);
+	return false;
+
+errorSilent:
+	if (chunks != NULL) {
+		DisposeHandle((Handle)chunks);
+	}
 	return false;
 }
 
@@ -365,9 +468,6 @@ static OSErr ProjectWriteHeader(short refNum, int nchunks,
 	DisposePtr(ptr);
 	return err;
 }
-
-static const UInt32 kProjectAliasChunks[2] = {'LOCA', 'REMA'};
-static const UInt32 kProjectPathChunks[2] = {'LOCP', 'REMP'};
 
 static OSErr ProjectFlush(short refNum)
 {

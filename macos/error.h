@@ -17,6 +17,8 @@ typedef enum ErrorCode {
 	kErrCouldNotReadProject,
 	// The project file is damaged.
 	kErrProjectDamaged,
+	// The project data is too large.
+	kErrProjectLarge,
 	// The project file is from an unknown version of SyncFiles.
 	kErrProjectUnknownVersion,
 	// Could not query volume parameters.
