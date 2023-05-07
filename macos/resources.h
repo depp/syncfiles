@@ -11,6 +11,7 @@
 
 /* ALRT Error dialog */
 #define rAlrtError 128
+#define rAlrtFatal 129
 
 /* CNTL Controls */
 #define rCNTL_ChooseFolder 128

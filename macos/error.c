@@ -12,12 +12,8 @@
 #include <TextUtils.h>
 
 enum {
-	// OK
-	kStrOK = 1,
-	// Quit
-	kStrQuit,
 	// An error of type ^2 occurred.
-	kStrErrorCode,
+	kStrErrorCode = 1,
 	// Error at: ^1:^2
 	kStrErrorAt,
 	// Assertion: ^1
@@ -69,13 +65,10 @@ static void AppendError2(struct PStrBuilder *str, int sep, int strNum,
 	AppendErrorArray(str, sep, strNum, 2, params);
 }
 
-static void ShowErrorAlert(const unsigned char *message, int button)
+static void ShowErrorAlert(const unsigned char *message, int id)
 {
-	Str255 buttonText;
-
-	GetIndString(buttonText, rSTRS_Errors, button);
-	ParamText(message, buttonText, NULL, NULL);
-	Alert(rAlrtError, NULL);
+	ParamText(message, NULL, NULL, NULL);
+	Alert(id, NULL);
 }
 
 void ExitAssert(const unsigned char *file, int line,
@@ -91,7 +84,7 @@ void ExitAssert(const unsigned char *file, int line,
 	if (assertion != NULL) {
 		AppendError1(&str, '\r', kStrAssertion, assertion);
 	}
-	ShowErrorAlert(str.data, kStrQuit);
+	ShowErrorAlert(str.data, rAlrtFatal);
 	QuitApp();
 }
 
@@ -113,7 +106,7 @@ void ShowError(ErrorCode err1, ErrorCode err2, short osErr,
 	if (str.data[0] == 0) {
 		AppendError0(&str, ' ', kStrUnknown);
 	}
-	ShowErrorAlert(str.data, kStrOK);
+	ShowErrorAlert(str.data, rAlrtError);
 }
 
 void ShowMemError(void)

@@ -18,16 +18,37 @@ resource 'ALRT' (rAlrtError, purgeable) {
 	centerMainScreen
 };
 
+resource 'ALRT' (rAlrtFatal, purgeable) {
+	{ 40, 40, 141, 360 },
+	129, /* DITL ID */
+	{
+		OK, visible, sound1,
+		OK, visible, sound1,
+		OK, visible, sound1,
+		OK, visible, sound1,
+	},
+	centerMainScreen
+};
+
 /* See Macintosh Human Interface Guidelines (1992) p. 197 "Basic Dialog Box Layout" */
 /* Note that there are an extra 3px of margin for "free" on the dialog border. */
 resource 'DITL' (128, purgeable) {{
 	/* Quit button: 13px margin */
 	{ 71, 240, 91, 310 },
-	Button { enabled, "Quit" },
+	Button { enabled, "OK" },
 	/* Error text: 13px margin, 3 lines @ 16px line height */
 	{ 10, 75, 58, 310 },
 	StaticText { enabled, "^0" },
 	/* Icon: 13px vertical, 23px horizontal */
+	{ 10, 20, 42, 52 },
+	Icon { enabled, 0 },
+}};
+
+resource 'DITL' (129, purgeable) {{
+	{ 71, 240, 91, 310 },
+	Button { enabled, "Quit" },
+	{ 10, 75, 58, 310 },
+	StaticText { enabled, "^0" },
 	{ 10, 20, 42, 52 },
 	Icon { enabled, 0 },
 }};
@@ -39,13 +60,13 @@ resource 'DLOG' (rDLOG_OpenFolder, purgeable) {
 	invisible,
 	noGoAway,
 	0,
-	129,
+	130,
 	"",
 	noAutoCenter,
 };
 
 /* Open Folder, based on system -6042 */
-resource 'DITL' (129, purgeable) {{
+resource 'DITL' (130, purgeable) {{
 	/* Standard file (do not change, see IM: Files 3-18) */
 	{135, 252, 155, 332},
 	Button {enabled, "Open"},
@@ -119,8 +140,6 @@ resource 'BNDL' (128, purgeable) {
 };
 
 resource 'STR#' (rSTRS_Errors) {{
-	"OK",
-	"Quit",
 	"An error of type ^2 occurred.",
 	"Error at: ^1:^2",
 	"Assertion: ^1",
