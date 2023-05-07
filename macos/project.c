@@ -291,10 +291,12 @@ static Boolean ProjectRead(ProjectHandle project)
 	long count, size;
 	ErrorCode err;
 	OSErr osErr;
-	int nchunks, i;
+	int nchunks, i, pathLength;
 	UInt32 headerCRC, gotCRC;
-	Handle chunkData;
+	Handle alias, path;
 	ProjectChunkStatus chunkStatus;
+	FSSpec folderSpec;
+	Boolean wasChanged;
 
 	chunks = NULL;
 	err = kErrNone;
@@ -348,25 +350,52 @@ static Boolean ProjectRead(ProjectHandle project)
 	}
 
 	for (i = 0; i < 2; i++) {
-		chunkStatus =
-			ProjectReadChunk(project, nchunks, chunks, kProjectAliasChunks[i],
-		                     &chunkData, &size);
-		if (chunkStatus == kChunkError) {
+		chunkStatus = ProjectReadChunk(project, nchunks, chunks,
+		                               kProjectAliasChunks[i], &alias, &size);
+		switch (chunkStatus) {
+		case kChunkError:
 			goto errorSilent;
-		}
-		if (chunkStatus == kChunkFound) {
-			(*project)->dirs[i].alias = (AliasHandle)chunkData;
-			// FIXME: Resolve the alias.
-			continue;
-		}
-		chunkStatus = ProjectReadChunk(
-			project, nchunks, chunks, kProjectPathChunks[i], &chunkData, &size);
-		if (chunkStatus == kChunkError) {
-			goto errorSilent;
-		}
-		if (chunkStatus == kChunkFound) {
-			(*project)->dirs[i].pathLength = size;
-			(*project)->dirs[i].path = chunkData;
+		case kChunkFound:
+			(*project)->dirs[i].alias = (AliasHandle)alias;
+			osErr = ResolveAlias(NULL, (AliasHandle)alias, &folderSpec,
+			                     &wasChanged);
+			err = (ErrorCode)(kErrLocalNotFound + i);
+			switch (osErr) {
+			case noErr:
+				osErr = GetDirPath(&folderSpec, &pathLength, &path);
+				if (osErr != 0) {
+					ShowError(err, kErrNone, osErr, NULL);
+				} else {
+					(*project)->dirs[i].pathLength = pathLength;
+					(*project)->dirs[i].path = path;
+				}
+				break;
+			case nsvErr:
+				ShowError(err, kErrNotMounted, 0, NULL);
+				break;
+			case fnfErr:
+			case dirNFErr:
+				ShowError(err, kErrNone, 0, NULL);
+				break;
+			default:
+				ShowError(err, kErrNone, osErr, NULL);
+				break;
+			}
+			break;
+		default:
+			chunkStatus = ProjectReadChunk(project, nchunks, chunks,
+			                               kProjectPathChunks[i], &path, &size);
+			switch (chunkStatus) {
+			case kChunkError:
+				goto errorSilent;
+			case kChunkFound:
+				(*project)->dirs[i].pathLength = size;
+				(*project)->dirs[i].path = path;
+				break;
+			default:
+				break;
+			}
+			break;
 		}
 	}
 
@@ -411,10 +440,13 @@ void ProjectOpen(FSSpec *spec, ScriptCode script)
 	memcpy(&projectp->fileSpec, spec, sizeof(FSSpec));
 	projectp->fileScript = script;
 
-	ProjectRead(project);
+	if (!ProjectRead(project)) {
+		// This will close the file.
+		ProjectDelete(project);
+		return;
+	}
 
-	ProjectDelete(project);
-	// ProjectCreateWindow(project);
+	ProjectCreateWindow(project);
 }
 
 void ProjectAdjustMenus(ProjectHandle project, MenuHandle fileMenu)

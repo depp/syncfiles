@@ -26,7 +26,13 @@ typedef enum ErrorCode {
 	// Could not create alias.
 	kErrAlias,
 	// Could not get directory path.
-	kErrDirPath
+	kErrDirPath,
+	// Local project directory not found.
+	kErrLocalNotFound,
+	// Remote project directory not found.
+	kErrRemoteNotFound,
+	// The volume is not mounted.
+	kErrNotMounted
 } ErrorCode;
 
 // ExitAssert shows an assertion error and quits the program. Either the file or

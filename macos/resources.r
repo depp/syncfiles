@@ -154,6 +154,9 @@ resource 'STR#' (rSTRS_Errors) {{
 	"Could not query volume parameters.",
 	"Could not create alias.",
 	"Could not get directory path.",
+	"Local project directory not found.",
+	"Remote project directory not found.",
+	"The volume is not mounted.",
 }};
 
 resource 'WIND' (rWIND_Project, preload, purgeable) {
