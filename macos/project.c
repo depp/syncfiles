@@ -119,27 +119,59 @@ struct Project {
 	struct ProjectDir dirs[2];
 };
 
-void ProjectNew(void)
+// ProjectNewObject creates a new empty Project object.
+static ProjectHandle ProjectNewObject(void)
 {
 	ProjectHandle project;
-	WindowRef window;
-	ControlRef control;
-	struct Project *projectp;
-	int i, windowWidth, controlWidth;
 
 	project = (ProjectHandle)NewHandle(sizeof(struct Project));
 	if (project == NULL) {
-		EXIT_INTERNAL();
+		ShowMemError();
+		return NULL;
 	}
+	memset(*project, 0, sizeof(struct Project));
+	return project;
+}
+
+// ProjectDelete deletes a Project object. It does not free any associated
+// windows.
+static void ProjectDelete(ProjectHandle project)
+{
+	Handle h;
+	int i;
+	short fileRef;
+
+	fileRef = (*project)->fileRef;
+	if (fileRef != 0) {
+		FSClose(fileRef);
+	}
+	for (i = 0; i < 2; i++) {
+		h = (*project)->dirs[i].path;
+		if (h != NULL) {
+			DisposeHandle(h);
+		}
+		h = (Handle)(*project)->dirs[i].alias;
+		if (h != NULL) {
+			DisposeHandle(h);
+		}
+	}
+	DisposeHandle((Handle)project);
+}
+
+// ProjectCreateWindow creates a window for a given Project object.
+static void ProjectCreateWindow(ProjectHandle project)
+{
+	WindowRef window;
+	ControlRef control;
+	int i, windowWidth, controlWidth;
+
 	window = GetNewCWindow(rWIND_Project, NULL, (WindowPtr)-1);
 	if (window == NULL) {
 		EXIT_INTERNAL();
 	}
 	windowWidth = window->portRect.right - window->portRect.left;
 	SetWRefCon(window, (long)project);
-	projectp = *project;
-	memset(projectp, 0, sizeof(*projectp));
-	projectp->windowWidth = windowWidth;
+	(*project)->windowWidth = windowWidth;
 
 	for (i = 0; i < 2; i++) {
 		control = GetNewControl(rCNTL_ChooseFolder, window);
@@ -156,6 +188,17 @@ void ProjectNew(void)
 	ShowWindow(window);
 }
 
+void ProjectNew(void)
+{
+	ProjectHandle project;
+
+	project = ProjectNewObject();
+	if (project == NULL) {
+		return;
+	}
+	ProjectCreateWindow(project);
+}
+
 void ProjectAdjustMenus(ProjectHandle project, MenuHandle fileMenu)
 {
 	(void)project;
@@ -169,19 +212,9 @@ void ProjectAdjustMenus(ProjectHandle project, MenuHandle fileMenu)
 
 static void ProjectClose(WindowRef window, ProjectHandle project)
 {
-	struct Project *projectp;
-	int i;
-
 	KillControls(window);
 	DisposeWindow(window);
-	HLock((Handle)project);
-	projectp = *project;
-	for (i = 0; i < 2; i++) {
-		if (projectp->dirs[i].path != NULL) {
-			DisposeHandle(projectp->dirs[i].path);
-		}
-	}
-	DisposeHandle((Handle)project);
+	ProjectDelete(project);
 }
 
 #define kChunkCount 4
