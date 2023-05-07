@@ -9,7 +9,6 @@
 #include "macos/main.h"
 #include "macos/path.h"
 #include "macos/resources.h"
-#include "macos/strutil.h"
 #include "macos/tempfile.h"
 
 #include <Aliases.h>

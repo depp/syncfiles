@@ -265,7 +265,7 @@ void main(void)
 		Handle menuBar;
 		menuBar = GetNewMBar(rMBAR_Main);
 		if (menuBar == NULL) {
-			EXIT_ASSERT(NULL);
+			EXIT_INTERNAL();
 		}
 		SetMenuBar(menuBar);
 		DisposeHandle(menuBar);

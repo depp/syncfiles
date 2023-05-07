@@ -35,10 +35,6 @@ void ExitAssert(const unsigned char *file, int line,
 // EXIT_INTERNAL shows an internal error message and quits the program.
 #define EXIT_INTERNAL() ExitAssert("\p" __FILE__, __LINE__, NULL)
 
-// EXIT_ASSERT shows an assertion error and quits the program. The message may
-// be NULL.
-#define EXIT_ASSERT(str) ExitAssert("\p" __FILE__, __LINE__, str)
-
 // ASSERT checks that the given condition is true. Otherwise, it displays an
 // error message and quits the program.
 #define ASSERT(p)                                         \

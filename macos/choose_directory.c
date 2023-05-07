@@ -5,7 +5,6 @@
 
 #include "macos/error.h"
 #include "macos/resources.h"
-#include "macos/strutil.h"
 
 #include <string.h>
 
@@ -53,7 +52,10 @@ static void SelectCurrentDirectory(struct ChooseDirReply *reply)
 	directory = reply->directory;
 	directory->vRefNum = ci.dirInfo.ioVRefNum;
 	directory->parID = ci.dirInfo.ioDrParID;
-	StrCopy(directory->name, sizeof(directory->name), name);
+	if (name[0] >= sizeof(directory->name)) {
+		EXIT_INTERNAL();
+	}
+	memcpy(directory->name, name, name[0] + 1);
 	reply->status = kCDCurrent;
 }
 
