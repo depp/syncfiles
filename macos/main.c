@@ -261,8 +261,102 @@ static void HandleUpdate(EventRecord *event)
 	SetPort(savedPort);
 }
 
-void main(void)
+static void HandleHighLevel(EventRecord *event)
 {
+	OSErr err;
+
+	err = AEProcessAppleEvent(event);
+	if (err != 0) {
+		ShowError(kErrNone, kErrNone, err, NULL);
+	}
+}
+
+static OSErr CheckRequiredParams(const AppleEvent *event)
+{
+	OSErr err;
+	DescType returnedType;
+	Size size;
+
+	err = AEGetAttributePtr(event, keyMissedKeywordAttr, typeWildCard,
+	                        &returnedType, NULL, 0, &size);
+	return err == errAEDescNotFound ? 0 : errAEParamMissed;
+}
+
+static pascal OSErr HandleOpenApplication(const AppleEvent *event,
+                                          AppleEvent *reply,
+                                          unsigned long refCon)
+{
+	OSErr err;
+
+	(void)reply;
+	(void)refCon;
+	err = CheckRequiredParams(event);
+	if (err != 0) {
+		return err;
+	}
+	ProjectNew();
+	return 0;
+}
+
+static pascal OSErr HandleOpenDocuments(const AppleEvent *event,
+                                        AppleEvent *reply, unsigned long refCon)
+{
+	(void)event;
+	(void)reply;
+	(void)refCon;
+	return 0;
+}
+
+static pascal OSErr HandlePrintDocuments(const AppleEvent *event,
+                                         AppleEvent *reply,
+                                         unsigned long refCon)
+{
+	(void)event;
+	(void)reply;
+	(void)refCon;
+	return 0;
+}
+static pascal OSErr HandleQuitApplication(const AppleEvent *event,
+                                          AppleEvent *reply,
+                                          unsigned long refCon)
+{
+	(void)event;
+	(void)reply;
+	(void)refCon;
+	return 0;
+}
+
+struct AppleEventHandler {
+	AEEventID id;
+	AEEventHandlerProcPtr function;
+};
+
+const struct AppleEventHandler kAppleEventHandlers[] = {
+	{kAEOpenApplication, HandleOpenApplication},
+	{kAEOpenDocuments, HandleOpenDocuments},
+	{kAEPrintDocuments, HandlePrintDocuments},
+	{kAEQuitApplication, HandleQuitApplication},
+};
+
+static void InitializeAppleEvents(void)
+{
+	OSErr err;
+	int i;
+
+	for (i = 0; i < ARRAY_COUNT(kAppleEventHandlers); i++) {
+		err = AEInstallEventHandler(kCoreEventClass, kAppleEventHandlers[i].id,
+		                            kAppleEventHandlers[i].function, 0, false);
+		if (err != 0) {
+			ShowError(kErrNone, kErrNone, err, NULL);
+			return;
+		}
+	}
+}
+
+static void Initialize(void)
+{
+	Handle menuBar;
+
 	MaxApplZone();
 	InitGraf(&qd.thePort);
 	InitFonts();
@@ -273,17 +367,21 @@ void main(void)
 	InitCursor();
 
 	// Set up menu bar.
-	{
-		Handle menuBar;
-		menuBar = GetNewMBar(rMBAR_Main);
-		if (menuBar == NULL) {
-			EXIT_INTERNAL();
-		}
-		SetMenuBar(menuBar);
-		DisposeHandle(menuBar);
-		AppendResMenu(GetMenuHandle(rMENU_Apple), 'DRVR');
-		DrawMenuBar();
+	menuBar = GetNewMBar(rMBAR_Main);
+	if (menuBar == NULL) {
+		EXIT_INTERNAL();
 	}
+	SetMenuBar(menuBar);
+	DisposeHandle(menuBar);
+	AppendResMenu(GetMenuHandle(rMENU_Apple), 'DRVR');
+	DrawMenuBar();
+
+	InitializeAppleEvents();
+}
+
+void main(void)
+{
+	Initialize();
 
 	for (;;) {
 		EventRecord event;
@@ -311,7 +409,10 @@ void main(void)
 
 			// case diskEvt:
 			// osEvt:
-			// case kHighLevelEvent:
+
+		case kHighLevelEvent:
+			HandleHighLevel(&event);
+			break;
 		}
 	}
 }
