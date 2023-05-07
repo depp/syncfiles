@@ -10,6 +10,9 @@ typedef struct Project **ProjectHandle;
 // ProjectNew creates a new empty synchronization project.
 void ProjectNew(void);
 
+// ProjectOpen opens an existing synchronization project.
+void ProjectOpen(FSSpec *spec, ScriptCode script);
+
 // ProjectAdjustMenus adjusts menus before selecting a menu item.
 void ProjectAdjustMenus(ProjectHandle project, MenuHandle fileMenu);
 

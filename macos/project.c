@@ -47,6 +47,8 @@ boundary. This is just to make it easier to read hexdumps.
 
 #define kVersion 0x10000
 
+#define kMaxChunkCount 32
+
 // clang-format off
 
 // Magic cookie that identifies project files.
@@ -197,6 +199,119 @@ void ProjectNew(void)
 		return;
 	}
 	ProjectCreateWindow(project);
+}
+
+// ProjectReadError displays an error message encountered when trying to read a
+// project.
+static void ProjectReadError(ProjectHandle project, ErrorCode err, OSErr osErr)
+{
+	StrFileName name;
+
+	memcpy(name, (*project)->fileSpec.name, sizeof(StrFileName));
+	ShowError(kErrCouldNotReadProject, err, osErr, name);
+}
+
+// ProjectRead reads the project from disk. Returns true on success.
+static Boolean ProjectRead(ProjectHandle project)
+{
+	struct ProjectHeader header;
+	struct ProjectChunk **chunks;
+	short fileRef;
+	long count, size;
+	ErrorCode err;
+	OSErr osErr;
+	int nchunks;
+	UInt32 headerCRC, gotCRC;
+
+	chunks = NULL;
+	err = kErrNone;
+	osErr = 0;
+
+	fileRef = (*project)->fileRef;
+	osErr = SetFPos(fileRef, fsFromStart, 0);
+	if (osErr != 0) {
+		goto error;
+	}
+	count = sizeof(header);
+	osErr = FSRead(fileRef, &count, &header);
+	if (osErr != 0) {
+		goto error;
+	}
+	if (count < sizeof(header) ||
+	    memcmp(header.magic, kMagic, sizeof(kMagic)) != 0 ||
+	    header.chunkCount > kMaxChunkCount) {
+		err = kErrProjectDamaged;
+		goto error;
+	}
+	headerCRC = header.crc32;
+	header.crc32 = 0;
+	gotCRC = CRC32Update(0, &header, sizeof(header));
+	nchunks = header.chunkCount;
+	if (nchunks > 0) {
+		size = sizeof(struct ProjectChunk) * nchunks;
+		chunks = (struct ProjectChunk **)NewHandle(size);
+		if (chunks == NULL) {
+			err = kErrOutOfMemory;
+			osErr = MemError();
+			goto error;
+		}
+		count = size;
+		osErr = FSRead(fileRef, &count, *chunks);
+		if (osErr != 0) {
+			goto error;
+		}
+		if (count < size) {
+			err = kErrProjectDamaged;
+			goto error;
+		}
+		gotCRC = CRC32Update(gotCRC, *chunks, size);
+	}
+	if (headerCRC != gotCRC) {
+		err = kErrProjectDamaged;
+		goto error;
+	}
+
+	// TODO: read project data
+
+	if (chunks != NULL) {
+		DisposeHandle((Handle)chunks);
+	}
+	return true;
+
+error:
+	if (chunks != NULL) {
+		DisposeHandle((Handle)chunks);
+	}
+	ProjectReadError(project, err, osErr);
+	return false;
+}
+
+void ProjectOpen(FSSpec *spec, ScriptCode script)
+{
+	ProjectHandle project;
+	struct Project *projectp;
+	short fileRef;
+	OSErr err;
+
+	err = FSpOpenDF(spec, fsRdWrPerm, &fileRef);
+	if (err != noErr) {
+		ShowError(kErrCouldNotReadProject, kErrNone, err, spec->name);
+		return;
+	}
+	project = ProjectNewObject();
+	if (project == NULL) {
+		FSClose(fileRef);
+		return;
+	}
+	projectp = *project;
+	projectp->fileRef = fileRef;
+	memcpy(&projectp->fileSpec, spec, sizeof(FSSpec));
+	projectp->fileScript = script;
+
+	ProjectRead(project);
+
+	ProjectDelete(project);
+	// ProjectCreateWindow(project);
 }
 
 void ProjectAdjustMenus(ProjectHandle project, MenuHandle fileMenu)

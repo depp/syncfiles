@@ -26,9 +26,12 @@ static const OSType kFileTypes[] = {kTypeProject};
 // HandleOpen handles the Open menu command.
 static void HandleOpen(void)
 {
-	StandardFileReply sfreply;
+	StandardFileReply reply;
 
-	StandardGetFile(NULL, ARRAY_COUNT(kFileTypes), kFileTypes, &sfreply);
+	StandardGetFile(NULL, ARRAY_COUNT(kFileTypes), kFileTypes, &reply);
+	if (reply.sfGood) {
+		ProjectOpen(&reply.sfFile, reply.sfScript);
+	}
 }
 
 // HandleClose handles a request to close the given window.
