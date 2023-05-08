@@ -24,4 +24,4 @@ You still have to figure out how to transfer files.
 
 ## License
 
-SyncFiles is distributed under the terms of the MIT license. See LICENSE.txt for details.
+SyncFiles is distributed under the terms of the Mozilla Public License, version 2.0. See LICENSE.txt for details.
