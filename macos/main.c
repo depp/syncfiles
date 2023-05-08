@@ -301,10 +301,40 @@ static pascal OSErr HandleOpenApplication(const AppleEvent *event,
 static pascal OSErr HandleOpenDocuments(const AppleEvent *event,
                                         AppleEvent *reply, unsigned long refCon)
 {
-	(void)event;
+	OSErr err;
+	AEDescList docList;
+	long count, i;
+	FSSpec file;
+	Size size;
+	AEKeyword keyword;
+	DescType type;
+
 	(void)reply;
 	(void)refCon;
-	return 0;
+	err = AEGetParamDesc(event, keyDirectObject, typeAEList, &docList);
+	if (err != 0) {
+		return err;
+	}
+	err = CheckRequiredParams(event);
+	if (err != 0) {
+		goto done;
+	}
+	err = AECountItems(&docList, &count);
+	if (err != 0) {
+		goto done;
+	}
+	for (i = 1; i <= count; i++) {
+		err = AEGetNthPtr(&docList, i, typeFSS, &keyword, &type, &file,
+		                  sizeof(file), &size);
+		if (err != 0) {
+			goto done;
+		}
+		ProjectOpen(&file, smSystemScript);
+	}
+
+done:
+	AEDisposeDesc(&docList);
+	return err;
 }
 
 static pascal OSErr HandlePrintDocuments(const AppleEvent *event,
